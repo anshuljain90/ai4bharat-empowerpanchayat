@@ -25,6 +25,22 @@
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
     <title>Gram Sabha Live</title>
+    <script>
+      // Polyfill: navigator.mediaDevices may be limited on non-HTTPS connections.
+      // The JioMeet SDK calls addEventListener on it, which can be undefined over HTTP.
+      if (!navigator.mediaDevices) {
+        navigator.mediaDevices = {};
+      }
+      if (!navigator.mediaDevices.addEventListener) {
+        navigator.mediaDevices.addEventListener = function () {};
+      }
+      if (!navigator.mediaDevices.removeEventListener) {
+        navigator.mediaDevices.removeEventListener = function () {};
+      }
+      if (!navigator.mediaDevices.enumerateDevices) {
+        navigator.mediaDevices.enumerateDevices = function () { return Promise.resolve([]); };
+      }
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
