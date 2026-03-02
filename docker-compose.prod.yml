@@ -71,8 +71,13 @@ services:
       - MONGODB_URL=mongodb://mongodb:27017
       - DATABASE_NAME=${DATABASE_NAME:-voter_registration}
       - STT_PROVIDER=${STT_PROVIDER:-whisper}
-      - LLM_PROVIDER=${LLM_PROVIDER:-huggingface}
-      - TRANSLATION_PROVIDER=${TRANSLATION_PROVIDER:-llm}
+      - LLM_PROVIDER=${LLM_PROVIDER:-bedrock}
+      - TRANSLATION_PROVIDER=${TRANSLATION_PROVIDER:-aws_translate}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - BEDROCK_MODEL_ID=${BEDROCK_MODEL_ID:-amazon.nova-lite-v1:0}
+      - BEDROCK_MAX_TOKENS=${BEDROCK_MAX_TOKENS:-4096}
     volumes:
       - video_mom_temp_storage:/app/temp_storage
     depends_on:
