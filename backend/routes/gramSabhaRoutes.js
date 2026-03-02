@@ -184,6 +184,8 @@ router.post(
   isPanchayatPresident,
   upload.array("attachments"),
   async (req, res) => {
+    console.log('[GramSabha Create] >>> Route handler entered at', new Date().toISOString());
+    console.log('[GramSabha Create] >>> req.body keys:', Object.keys(req.body));
     try {
       const {
         panchayatId,
@@ -202,13 +204,19 @@ router.post(
       let parsedAgenda = agenda || [];
       let parsedSelectedItems = [];
 
+      console.log('[GramSabha Create] panchayatId:', panchayatId, ', dateTime:', dateTime, ', title:', title || 'AUTO');
+      console.log('[GramSabha Create] agenda items:', parsedAgenda?.length || 0, ', selectedAgendaItems:', selectedAgendaItems ? 'PROVIDED' : 'NONE');
+      console.log('[GramSabha Create] scheduledDurationHours:', scheduledDurationHours, ', location:', location);
+
       if (selectedAgendaItems) {
         try {
           parsedSelectedItems =
             typeof selectedAgendaItems === "string"
               ? JSON.parse(selectedAgendaItems)
               : selectedAgendaItems;
+          console.log('[GramSabha Create] parsedSelectedItems count:', parsedSelectedItems.length);
         } catch (err) {
+          console.log('[GramSabha Create] EARLY EXIT - invalid selectedAgendaItems format');
           return res.status(400).json({
             success: false,
             message:
@@ -234,6 +242,7 @@ router.post(
         (!parsedAgenda || parsedAgenda.length === 0) &&
         parsedSelectedItems.length === 0
       ) {
+        console.log('[GramSabha Create] EARLY EXIT - no agenda and no selectedAgendaItems');
         return res.status(400).json({
           success: false,
           message: "Either agenda or selectedAgendaItems must be provided.",
@@ -244,6 +253,7 @@ router.post(
         if (typeof parsedAgenda === "string") {
           parsedAgenda = JSON.parse(parsedAgenda);
           if (!Array.isArray(parsedAgenda)) {
+            console.log('[GramSabha Create] EARLY EXIT - agenda is not an array');
             return res.status(400).json({
               success: false,
               message: "Agenda must be an array.",
@@ -251,6 +261,7 @@ router.post(
           }
         }
       } catch (err) {
+        console.log('[GramSabha Create] EARLY EXIT - invalid agenda JSON:', err.message);
         return res.status(400).json({
           success: false,
           message: "Invalid agenda format. Must be a JSON array.",
@@ -268,10 +279,13 @@ router.post(
       }));
 
       // Generate default title if not provided
+      console.log('[GramSabha Create] Parsed agenda count:', parsedAgenda.length);
       let generatedTitle = title;
       if (!title) {
+        console.log('[GramSabha Create] No title provided, generating from panchayat');
         const panchayat = await Panchayat.findById(panchayatId);
         if (!panchayat) {
+          console.log('[GramSabha Create] EARLY EXIT - panchayat not found:', panchayatId);
           return res
             .status(404)
             .json({ success: false, message: "Panchayat not found" });
@@ -304,6 +318,8 @@ router.post(
             uploadedAt: new Date(),
           }))
         : [];
+
+      console.log('[GramSabha Create] Title resolved to:', generatedTitle);
 
       // Calculate end time based on dateTime and duration
       const startTime = new Date(dateTime);
@@ -420,6 +436,7 @@ router.post(
         },
       });
     } catch (error) {
+      console.error('[GramSabha Create] UNHANDLED ERROR:', error.message, error.stack);
       res.status(500).json({
         success: false,
         message: "Error creating Gram Sabha",

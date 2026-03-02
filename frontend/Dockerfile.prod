@@ -22,12 +22,24 @@ RUN npm run build
 # Production stage — Nginx
 FROM nginx:alpine
 
+# Install openssl to generate self-signed certificate
+RUN apk add --no-cache openssl
+
+# Generate self-signed SSL certificate for the IP
+RUN mkdir -p /etc/nginx/ssl && \
+    openssl req -x509 -nodes -days 3650 \
+      -newkey rsa:2048 \
+      -keyout /etc/nginx/ssl/selfsigned.key \
+      -out    /etc/nginx/ssl/selfsigned.crt \
+      -subj   "/C=IN/ST=State/L=City/O=eGramSabha/CN=44.194.253.143" \
+      -addext "subjectAltName=IP:44.194.253.143"
+
 # Copy production nginx config
 COPY nginx.prod.conf /etc/nginx/conf.d/default.conf
 
 # Copy built React app
 COPY --from=build /app/build /usr/share/nginx/html
 
-EXPOSE 80
+EXPOSE 80 443
 
 CMD ["nginx", "-g", "daemon off;"]

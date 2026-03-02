@@ -44,26 +44,30 @@ const isAdmin = async (req, res, next) => {
 
 // Middleware to check if the user is authenticated as official
 const isOfficial = async (req, res, next) => {
+    console.log(`[auth.isOfficial] ${req.method} ${req.originalUrl} - checking official auth`);
     try {
         // Get token from header
         const token = req.header('Authorization')?.replace('Bearer ', '');
         if (!token) {
+            console.log('[auth.isOfficial] REJECTED - no token');
             return res.status(401).json({ success: false, message: 'No authentication token, access denied' });
         }
-        
+
         // Verify token with official type
         const decoded = verifyToken(token, 'OFFICIAL');
-        
+
         // Find official by id
         const official = await Official.findById(decoded.id);
         if (!official || official.role === 'ADMIN') {
+            console.log('[auth.isOfficial] REJECTED - not official or is admin');
             return res.status(401).json({ success: false, message: 'Official access required' });
         }
-        
+
         if (!official.isActive) {
+            console.log('[auth.isOfficial] REJECTED - account deactivated');
             return res.status(403).json({ success: false, message: 'Official account is deactivated' });
         }
-        
+
         // Add official to request object
         req.official = {
             id: official._id,
@@ -71,13 +75,15 @@ const isOfficial = async (req, res, next) => {
             role: official.role,
             panchayatId: official.panchayatId
         };
-        
+
+        console.log(`[auth.isOfficial] PASSED - ${official.username} (${official.role})`);
         next();
     } catch (error) {
         if (error.name === 'TokenExpiredError') {
+            console.log('[auth.isOfficial] REJECTED - token expired');
             return res.status(401).json({ success: false, message: 'Token has expired', expired: true });
         }
-        console.error('Authentication error:', error);
+        console.error('[auth.isOfficial] REJECTED - error:', error.message);
         res.status(401).json({ success: false, message: 'Invalid official token', error: error.message });
     }
 };

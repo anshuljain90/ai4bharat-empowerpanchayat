@@ -245,30 +245,37 @@ const hasWardAccess = (wardParamName = 'wardId') => {
  * Check if user is a Panchayat President
  */
 const isPanchayatPresident = async (req, res, next) => {
+    console.log(`[isPanchayatPresident] ${req.method} ${req.originalUrl} - checking president role`);
     try {
         // Check for different auth objects
         const user = req.admin || req.official || req.citizen || req.user;
 
         if (!user) {
+            console.log('[isPanchayatPresident] REJECTED - no user object found');
             return res.status(401).json({
                 success: false,
                 message: 'Authentication required'
             });
         }
 
+        console.log(`[isPanchayatPresident] User: ${user.username || user.name}, role: ${user.role}, userType: ${user.userType || 'N/A'}`);
+
         // Admin can do anything a president can
         if (user.role === 'ADMIN' || user.userType === 'ADMIN') {
+            console.log('[isPanchayatPresident] PASSED - admin bypass');
             return next();
         }
 
         // Quick check based on role field
         if (user.role === 'PRESIDENT') {
+            console.log('[isPanchayatPresident] PASSED - role is PRESIDENT');
             return next();
         }
 
         // For safety, verify in the panchayat record
         const panchayat = await Panchayat.findById(user.panchayatId);
         if (!panchayat) {
+            console.log('[isPanchayatPresident] REJECTED - panchayat not found:', user.panchayatId);
             return res.status(404).json({
                 success: false,
                 message: 'Panchayat not found'
@@ -282,14 +289,17 @@ const isPanchayatPresident = async (req, res, next) => {
         );
 
         if (!isPresident) {
+            console.log('[isPanchayatPresident] REJECTED - not president in panchayat record');
             return res.status(403).json({
                 success: false,
                 message: 'Only Panchayat President can perform this action'
             });
         }
 
+        console.log('[isPanchayatPresident] PASSED - verified in panchayat record');
         next();
     } catch (error) {
+        console.error('[isPanchayatPresident] ERROR:', error.message);
         res.status(500).json({
             success: false,
             message: 'Error checking Panchayat President status',
