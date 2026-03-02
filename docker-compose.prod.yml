@@ -1,0 +1,112 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+      args:
+        - REACT_APP_API_URL=${FRONTEND_API_URL}
+        - REACT_APP_BACKEND_URL=${FRONTEND_BACKEND_URL}
+        - REACT_APP_INFRA=${APP_INFRA:-JIO}
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+      - video-mom-backend
+    restart: unless-stopped
+    networks:
+      - egramsabha-net
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    # expose port internally only (not to the host/internet)
+    expose:
+      - "5000"
+    environment:
+      - PORT=5000
+      - MONGODB_URI=${MONGODB_URI:-mongodb://mongodb:27017/voter_registration}
+      - NODE_ENV=production
+      - CORS_ORIGIN=${CORS_ORIGIN}
+      - BACKEND_URL=${BACKEND_URL}
+      - VIDEO_MOM_BACKEND_URL=http://video-mom-backend:8000
+      - JIOMEET_API=${JIOMEET_API}
+      - JIOMEET_APP_ID=${JIOMEET_APP_ID}
+      - PRIVATE_KEY_PATH=${PRIVATE_KEY_PATH:-./keys/RSA-PrivateKey.pem}
+      - PUBLIC_KEY_PATH=${PUBLIC_KEY_PATH:-./keys/RSA-PublicKey.pub}
+      - SUPPORT_EMAIL=${SUPPORT_EMAIL}
+      - SUPPORT_PHONE=${SUPPORT_PHONE}
+      - SUPPORT_CONTACT_NAME=${SUPPORT_CONTACT_NAME}
+      - STORAGE_BACKEND=${STORAGE_BACKEND:-gridfs}
+      - JWT_ADMIN_SECRET=${JWT_ADMIN_SECRET}
+      - JWT_OFFICIAL_SECRET=${JWT_OFFICIAL_SECRET}
+      - JWT_CITIZEN_SECRET=${JWT_CITIZEN_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - AGENDA_TRANSLATION_CRON=${AGENDA_TRANSLATION_CRON:-*/5 * * * *}
+      - INITIATE_SUMMARY_CRON=${INITIATE_SUMMARY_CRON:-*/5 * * * *}
+      - FETCH_SUMMARY_RESULTS_CRON=${FETCH_SUMMARY_RESULTS_CRON:-*/5 * * * *}
+      - RETRY_FAILED_SUMMARY_CRON=${RETRY_FAILED_SUMMARY_CRON:-*/10 * * * *}
+    volumes:
+      - backend_uploads:/app/uploads
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+    networks:
+      - egramsabha-net
+
+  video-mom-backend:
+    build:
+      context: ./video-mom-backend
+      dockerfile: Dockerfile
+    expose:
+      - "8000"
+    environment:
+      - JIO_API_KEY=${JIO_API_KEY}
+      - HF_TOKEN=${HF_TOKEN}
+      - STT_MODEL_ENDPOINT=${STT_MODEL_ENDPOINT}
+      - HUGGING_FACE_LLM_ENDPOINT=${HUGGING_FACE_LLM_ENDPOINT}
+      - HF_LLM=${HF_LLM}
+      - MONGODB_URL=mongodb://mongodb:27017
+      - DATABASE_NAME=${DATABASE_NAME:-voter_registration}
+      - STT_PROVIDER=${STT_PROVIDER:-whisper}
+      - LLM_PROVIDER=${LLM_PROVIDER:-huggingface}
+      - TRANSLATION_PROVIDER=${TRANSLATION_PROVIDER:-llm}
+    volumes:
+      - video_mom_temp_storage:/app/temp_storage
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+    networks:
+      - egramsabha-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  mongodb:
+    image: mongo:7
+    # internal only — NOT exposed to the internet
+    expose:
+      - "27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: always
+    networks:
+      - egramsabha-net
+    command: ["mongod", "--quiet"]
+
+networks:
+  egramsabha-net:
+    driver: bridge
+
+volumes:
+  mongodb_data:
+    driver: local
+  backend_uploads:
+    driver: local
+  video_mom_temp_storage:
+    driver: local

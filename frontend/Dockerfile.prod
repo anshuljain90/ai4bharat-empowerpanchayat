@@ -1,0 +1,31 @@
+# Build stage
+FROM node:18-alpine as build
+
+ARG REACT_APP_API_URL
+ARG REACT_APP_BACKEND_URL
+ARG REACT_APP_INFRA
+
+ENV REACT_APP_API_URL=$REACT_APP_API_URL
+ENV REACT_APP_BACKEND_URL=$REACT_APP_BACKEND_URL
+ENV REACT_APP_INFRA=$REACT_APP_INFRA
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+RUN npm run build
+
+# Production stage — Nginx
+FROM nginx:alpine
+
+# Copy production nginx config
+COPY nginx.prod.conf /etc/nginx/conf.d/default.conf
+
+# Copy built React app
+COPY --from=build /app/build /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

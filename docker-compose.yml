@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - REACT_APP_API_URL=${FRONTEND_API_URL:-http://localhost:5000/api}
+        - REACT_APP_BACKEND_URL=${FRONTEND_BACKEND_URL:-http://localhost:5000}
+        - REACT_APP_INFRA=${APP_INFRA:-JIO}
+    ports:
+      - "${FRONTEND_PORT:-3001}:80"
+    environment:
+      - REACT_APP_API_URL=${FRONTEND_API_URL:-http://localhost:5000/api}
+      - REACT_APP_BACKEND_URL=${FRONTEND_BACKEND_URL:-http://localhost:5000}
+    depends_on:
+      - backend
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "${BACKEND_PORT:-5000}:5000"
+    environment:
+      - PORT=5000
+      - MONGODB_URI=${MONGODB_URI:-mongodb://mongodb:27017/voter_registration}
+      - NODE_ENV=${NODE_ENV:-development}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3001}
+      - BACKEND_URL=${BACKEND_URL:-http://localhost:5000}
+      - VIDEO_MOM_BACKEND_URL=${VIDEO_MOM_BACKEND_URL:-http://localhost:8000}
+    # depends_on:
+    #   - mongodb
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - backend_uploads:/app/uploads
+    restart: unless-stopped
+
+  video-mom-backend:
+    build:
+      context: ./video-mom-backend
+      dockerfile: Dockerfile
+    ports:
+      - "${VIDEO_MOM_PORT:-8000}:8000"
+    environment:
+      - JIO_API_KEY=${JIO_API_KEY}
+      - HF_TOKEN=${HF_TOKEN}
+      - STT_MODEL_ENDPOINT=${STT_MODEL_ENDPOINT}
+      - HUGGING_FACE_LLM_ENDPOINT=${HUGGING_FACE_LLM_ENDPOINT}
+      - HF_LLM=${HF_LLM}
+      - MONGODB_URL=${MONGODB_URL:-mongodb://mongodb:27017}
+      - DATABASE_NAME=${VIDEO_MOM_DATABASE_NAME:-video_mom_db}
+      - STT_PROVIDER=${STT_PROVIDER:-jio}
+    depends_on:
+      - mongodb
+    volumes:
+      - ./video-mom-backend:/app
+      - video_mom_temp_storage:/app/temp_storage
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "${MONGODB_PORT:-27017}:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: always
+
+volumes:
+  mongodb_data:
+  backend_uploads:
+    driver: local
+  video_mom_temp_storage:
+    driver: local
