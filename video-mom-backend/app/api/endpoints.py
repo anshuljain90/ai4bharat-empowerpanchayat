@@ -671,10 +671,23 @@ async def get_translation_result(request_id: str, tracker: RequestTracker = Depe
 @router.get("/health/services")
 async def health_check_services():
     """Check all service endpoints health"""
+    llm_provider = getattr(settings, "LLM_PROVIDER", "huggingface")
+    translation_provider = getattr(settings, "TRANSLATION_PROVIDER", "llm")
+
+    # Determine LLM status based on active provider
+    if llm_provider == "bedrock":
+        llm_status = "configured" if llm_service.bedrock_client else "not_configured"
+        llm_provider_display = f"Bedrock ({settings.BEDROCK_MODEL_ID})"
+    else:
+        llm_status = "configured" if llm_service.api_key else "not_configured"
+        llm_provider_display = "HuggingFace"
+
     return {
         "overall_status": "configurable_provider_integration",
         "active_providers": {
             "stt": settings.STT_PROVIDER,
+            "llm": llm_provider,
+            "translation": translation_provider,
         },
         "services": {
             "stt_active": {
@@ -683,8 +696,8 @@ async def health_check_services():
                 "mode": "factory"
             },
             "llm_service": {
-                "provider": "HuggingFace",
-                "status": "configured" if llm_service.api_key else "not_configured"
+                "provider": llm_provider_display,
+                "status": llm_status,
             }
         },
         "available_endpoints": {

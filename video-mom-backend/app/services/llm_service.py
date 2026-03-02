@@ -10,28 +10,179 @@ logger = logging.getLogger(__name__)
 
 class LLMService:
     def __init__(self):
+        # Provider selection
+        self.llm_provider = getattr(settings, "LLM_PROVIDER", "huggingface").lower()
+        self.translation_provider = getattr(settings, "TRANSLATION_PROVIDER", "llm").lower()
+
+        # HuggingFace config (optional — only needed when llm_provider == "huggingface")
         self.api_key = settings.HF_TOKEN
         self.hugging_face_api_url = settings.HUGGING_FACE_LLM_ENDPOINT
         self.model_name = settings.HF_LLM
-        
-        # Validation
-        if not self.hugging_face_api_url:
-            logger.error("HUGGING_FACE_LLM_ENDPOINT not configured in environment variables")
-        if not self.model_name:
-            logger.error("HF_LLM not configured in environment variables")
-        
-        logger.info(f"LLM Service initialized with Hugging Face API: {self.hugging_face_api_url}")
-        logger.info(f"Using model: {self.model_name}")
-        logger.info(f"API key configured: {bool(self.api_key)}")
+
+        if self.llm_provider == "huggingface":
+            if not self.hugging_face_api_url:
+                logger.error("HUGGING_FACE_LLM_ENDPOINT not configured in environment variables")
+            if not self.model_name:
+                logger.error("HF_LLM not configured in environment variables")
+
+        # Bedrock client (lazy-init if provider is "bedrock")
+        self.bedrock_client = None
+        if self.llm_provider == "bedrock":
+            self._init_bedrock_client()
+
+        # AWS Translate client (lazy-init if provider is "aws_translate")
+        self.translate_client = None
+        if self.translation_provider == "aws_translate":
+            self._init_translate_client()
+
+        logger.info(f"LLM Service initialized — llm_provider={self.llm_provider}, translation_provider={self.translation_provider}")
+        if self.llm_provider == "huggingface":
+            logger.info(f"  HuggingFace API: {self.hugging_face_api_url}")
+            logger.info(f"  Model: {self.model_name}")
+            logger.info(f"  API key configured: {bool(self.api_key)}")
+        elif self.llm_provider == "bedrock":
+            logger.info(f"  Bedrock model: {settings.BEDROCK_MODEL_ID}")
+            logger.info(f"  AWS region: {settings.AWS_REGION}")
+
+    # ---- AWS client initializers ------------------------------------------------
+
+    def _init_bedrock_client(self):
+        """Initialize the Amazon Bedrock Runtime client."""
+        try:
+            import boto3
+            kwargs = {"service_name": "bedrock-runtime", "region_name": settings.AWS_REGION}
+            if settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY:
+                kwargs["aws_access_key_id"] = settings.AWS_ACCESS_KEY_ID
+                kwargs["aws_secret_access_key"] = settings.AWS_SECRET_ACCESS_KEY
+            self.bedrock_client = boto3.client(**kwargs)
+            logger.info("Bedrock runtime client initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize Bedrock client: {e}")
+            self.bedrock_client = None
+
+    def _init_translate_client(self):
+        """Initialize the AWS Translate client."""
+        try:
+            import boto3
+            kwargs = {"service_name": "translate", "region_name": settings.AWS_REGION}
+            if settings.AWS_ACCESS_KEY_ID and settings.AWS_SECRET_ACCESS_KEY:
+                kwargs["aws_access_key_id"] = settings.AWS_ACCESS_KEY_ID
+                kwargs["aws_secret_access_key"] = settings.AWS_SECRET_ACCESS_KEY
+            self.translate_client = boto3.client(**kwargs)
+            logger.info("AWS Translate client initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize AWS Translate client: {e}")
+            self.translate_client = None
         
     def _get_headers(self):
         return {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json"
         }
-    
+
+    # ---- Bedrock request --------------------------------------------------------
+
+    def _make_bedrock_request(self, messages: list, max_tokens: int = 4096) -> Optional[Dict]:
+        """Send messages to Amazon Bedrock via the Converse API and return an
+        HF-compatible response dict so that all downstream parsers work unchanged."""
+        if not self.bedrock_client:
+            logger.error("Bedrock client not initialised — cannot make request")
+            return None
+
+        try:
+            # Separate system messages from conversation messages
+            system_parts = []
+            converse_messages = []
+            for msg in messages:
+                role = msg.get("role", "user")
+                text = msg.get("content", "")
+                if role == "system":
+                    system_parts.append({"text": text})
+                else:
+                    converse_messages.append({
+                        "role": role,
+                        "content": [{"text": text}],
+                    })
+
+            bedrock_max = min(max_tokens, settings.BEDROCK_MAX_TOKENS)
+
+            kwargs = {
+                "modelId": settings.BEDROCK_MODEL_ID,
+                "messages": converse_messages,
+                "inferenceConfig": {
+                    "maxTokens": bedrock_max,
+                    "temperature": 0.3,
+                    "topP": 0.9,
+                },
+            }
+            if system_parts:
+                kwargs["system"] = system_parts
+
+            logger.info(f"Making Bedrock Converse request with {len(converse_messages)} messages, max_tokens={bedrock_max}")
+            response = self.bedrock_client.converse(**kwargs)
+
+            # Extract text from Bedrock response
+            output_message = response.get("output", {}).get("message", {})
+            content_blocks = output_message.get("content", [])
+            text = content_blocks[0]["text"] if content_blocks else ""
+            stop_reason = response.get("stopReason", "end_turn")
+
+            logger.info(f"Bedrock response received, length={len(text)}, stopReason={stop_reason}")
+
+            # Wrap in HF-compatible format
+            return {
+                "choices": [{
+                    "message": {"content": text},
+                    "finish_reason": "stop" if stop_reason == "end_turn" else stop_reason,
+                }]
+            }
+
+        except Exception as e:
+            logger.error(f"Bedrock Converse API error: {e}")
+            return None
+
+    # ---- AWS Translate helpers --------------------------------------------------
+
+    # Language name → AWS Translate language code
+    _AWS_LANG_CODES = {
+        "hindi": "hi", "english": "en", "tamil": "ta", "telugu": "te",
+        "kannada": "kn", "malayalam": "ml", "marathi": "mr", "bengali": "bn",
+        "gujarati": "gu", "punjabi": "pa", "urdu": "ur", "assamese": "as",
+        "oriya": "or", "odia": "or", "spanish": "es", "french": "fr",
+        "german": "de", "italian": "it", "portuguese": "pt", "russian": "ru",
+        "arabic": "ar", "chinese": "zh", "japanese": "ja", "korean": "ko",
+    }
+
+    def _translate_with_aws(self, text: str, target_language: str) -> Optional[str]:
+        """Translate text using AWS Translate. Returns translated string or None on failure."""
+        if not self.translate_client:
+            logger.warning("AWS Translate client not initialised")
+            return None
+
+        # Resolve language code
+        lang_code = self._AWS_LANG_CODES.get(target_language.lower(), target_language.lower())
+
+        try:
+            resp = self.translate_client.translate_text(
+                Text=text,
+                SourceLanguageCode="auto",
+                TargetLanguageCode=lang_code,
+            )
+            translated = resp.get("TranslatedText", "")
+            logger.info(f"AWS Translate success, target={lang_code}, length={len(translated)}")
+            return translated
+        except Exception as e:
+            logger.error(f"AWS Translate error: {e}")
+            return None
+
+    # ---- Chat request (first definition — used for transcription correction) ----
+
     def _make_chat_request(self, messages: list, max_tokens: int = 8000) -> Optional[Dict]:
         """Make request to Hugging Face chat completions API with proper token validation"""
+        # --- Provider branch: Bedrock ---
+        if self.llm_provider == "bedrock":
+            return self._make_bedrock_request(messages, max_tokens)
+
         if not self.api_key:
             logger.error("HF_TOKEN not configured - cannot make API requests")
             return None
@@ -531,10 +682,14 @@ class LLMService:
 
     def _make_chat_request(self, messages: list, max_tokens: int = 8000) -> Optional[Dict]:
         """Make request to Hugging Face chat completions API with proper token validation"""
+        # --- Provider branch: Bedrock ---
+        if self.llm_provider == "bedrock":
+            return self._make_bedrock_request(messages, max_tokens)
+
         if not self.api_key:
             logger.error("HF_TOKEN not configured - cannot make API requests")
             return None
-        
+
         # Validate and cap max_tokens for Cohere model
         model_max_tokens = 8192  # Cohere command-a-03-2025 limit
         if max_tokens > model_max_tokens:
@@ -1142,9 +1297,10 @@ Description: {issue.get('description', issue.get('transcription', 'No descriptio
             }
 
     def translate_text(self, text: str, target_language: str) -> Dict[str, Any]:
-        """Translate text using Hugging Face chat API. Relies 100% on LLM."""
+        """Translate text. Uses AWS Translate when TRANSLATION_PROVIDER=aws_translate,
+        falling back to LLM translation on failure."""
         logger.info(f"Starting translation to {target_language} for text length: {len(text) if text else 0}")
-        
+
         if not text or not text.strip():
             logger.warning("Empty text provided for translation")
             return {
@@ -1153,25 +1309,42 @@ Description: {issue.get('description', issue.get('transcription', 'No descriptio
                 "error": "No text provided",
                 "fallback_used": False
             }
-        
+
         input_text_stripped = text.strip()
-        logger.info("Attempting Hugging Face API for translation")
+
+        # --- AWS Translate path ---
+        if self.translation_provider == "aws_translate":
+            aws_result = self._translate_with_aws(input_text_stripped, target_language)
+            if aws_result is not None:
+                logger.info("Successfully used AWS Translate")
+                return {
+                    "text": aws_result,
+                    "status": "success",
+                    "error": None,
+                    "fallback_used": False,
+                    "provider": "aws_translate",
+                }
+            logger.warning("AWS Translate failed, falling back to LLM translation")
+
+        # --- LLM translation path (default or fallback) ---
+        logger.info("Attempting LLM-based translation")
         api_result = self._try_chat_translation(input_text_stripped, target_language)
-        
+
         if api_result is not None:
-            logger.info("Successfully used Hugging Face API for translation")
+            logger.info("Successfully used LLM for translation")
             return {
                 "text": api_result,
                 "status": "success",
                 "error": None,
-                "fallback_used": False
+                "fallback_used": self.translation_provider == "aws_translate",
+                "provider": "llm",
             }
-        
+
         logger.error(f"LLM translation to {target_language} failed for text: {input_text_stripped[:50]}...")
         return {
             "text": "",
             "status": "failed",
-            "error": "LLM translation failed",
+            "error": "All translation methods failed",
             "fallback_used": False
         }
     

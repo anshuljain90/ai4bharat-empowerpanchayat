@@ -9,22 +9,21 @@ Complete step-by-step guide to deploy eGramSabha on AWS using a single EC2 insta
 1. [Architecture Overview](#1-architecture-overview)
 2. [Cost Breakdown](#2-cost-breakdown)
 3. [Files Overview](#3-files-overview)
-4. [Configuring Environment Variables](#4-configuring-environment-variables)
-5. [Step 1 — AWS Account & CLI Setup](#step-1--aws-account--cli-setup)
-6. [Step 2 — Create Key Pair](#step-2--create-key-pair)
-7. [Step 3 — Create Security Group](#step-3--create-security-group)
-8. [Step 4 — Launch EC2 Instance](#step-4--launch-ec2-instance)
-9. [Step 5 — Allocate Elastic IP](#step-5--allocate-elastic-ip)
-10. [Step 6 — SSH into the Server](#step-6--ssh-into-the-server)
-11. [Step 7 — Setup the Server](#step-7--setup-the-server)
-12. [Step 8 — Clone and Deploy](#step-8--clone-and-deploy)
-13. [Step 9 — Verify Deployment](#step-9--verify-deployment)
-14. [Step 10 — Setup HTTPS (Optional)](#step-10--setup-https-optional)
-15. [Step 11 — Setup Backups & Monitoring](#step-11--setup-backups--monitoring)
-16. [Updating the Application](#updating-the-application)
-17. [Troubleshooting](#troubleshooting)
-18. [Cost Saving Tips](#cost-saving-tips)
-19. [Security Checklist](#security-checklist)
+4. [Step 1 — AWS Account & CLI Setup](#step-1--aws-account--cli-setup)
+5. [Step 2 — Create Key Pair](#step-2--create-key-pair)
+6. [Step 3 — Create Security Group](#step-3--create-security-group)
+7. [Step 4 — Launch EC2 Instance](#step-4--launch-ec2-instance)
+8. [Step 5 — Allocate Elastic IP](#step-5--allocate-elastic-ip)
+9. [Step 6 — SSH into the Server](#step-6--ssh-into-the-server)
+10. [Step 7 — Setup the Server](#step-7--setup-the-server)
+11. [Step 8 — Clone and Deploy](#step-8--clone-and-deploy)
+12. [Step 9 — Verify Deployment](#step-9--verify-deployment)
+13. [Step 10 — Setup HTTPS (Optional)](#step-10--setup-https-optional)
+14. [Step 11 — Setup Backups & Monitoring](#step-11--setup-backups--monitoring)
+15. [Updating the Application](#updating-the-application)
+16. [Troubleshooting](#troubleshooting)
+17. [Cost Saving Tips](#cost-saving-tips)
+18. [Security Checklist](#security-checklist)
 
 ---
 
@@ -69,7 +68,11 @@ Complete step-by-step guide to deploy eGramSabha on AWS using a single EC2 insta
         |   +----------------------------------------+   |
         +------------------------------------------------+
 
-External APIs: HuggingFace (Whisper STT + Cohere LLM), JioMeet
+External APIs:
+  - LLM: HuggingFace Cohere (default) OR Amazon Bedrock (Nova Lite)
+  - STT: Jio Translate (default) OR HuggingFace Whisper
+  - Translation: LLM-based (default) OR AWS Translate
+  - JioMeet
 ```
 
 Only port **80** (and optionally 443) is exposed to the internet. All backend services communicate over Docker's internal network.
@@ -113,7 +116,7 @@ All production files are already created in this repository:
 
 | File | Purpose |
 |------|---------|
-| `.env.production.example` | Production environment template (copy to `.env.production` and fill in API keys) |
+| `.env.production` | Production environment variables (template with `<YOUR_SERVER_IP>` placeholder) |
 | `docker-compose.prod.yml` | Production Docker Compose (internal networking, no exposed ports for backend) |
 | `frontend/Dockerfile.prod` | Production frontend Dockerfile (uses nginx.prod.conf) |
 | `frontend/nginx.prod.conf` | Production Nginx config (gzip, security headers, rate limiting, reverse proxy) |
@@ -125,109 +128,92 @@ All production files are already created in this repository:
 
 ---
 
-## 4. Configuring Environment Variables
+## AI Provider Configuration
 
-eGramSabha uses `.env.example` files as templates. **Never commit real secrets to git.** Copy each example, fill in your values, and the `.gitignore` will keep the real files out of version control.
+eGramSabha supports pluggable AI backends controlled by environment variables. Switching providers requires **zero code changes** — just update `.env` and restart.
 
-### 4.1 Quick Setup (Local Development)
+### Provider Matrix
 
-```bash
-# From the project root:
-cp .env.example .env
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
-cp video-mom-backend/.env.example video-mom-backend/.env
+| Capability    | Default Provider       | AWS Provider                     | Env Var               |
+|---------------|------------------------|----------------------------------|-----------------------|
+| LLM           | HuggingFace (Cohere)   | Amazon Bedrock (Nova Lite)       | `LLM_PROVIDER`        |
+| Translation   | LLM-based              | AWS Translate                    | `TRANSLATION_PROVIDER`|
+| STT           | Jio Translate          | *(no change)*                    | `STT_PROVIDER`        |
 
-# Then edit each .env file and fill in your API keys
+### Option A — HuggingFace Only (Default)
+
+No changes needed. The existing environment variables work as-is:
+
+```env
+LLM_PROVIDER=huggingface
+TRANSLATION_PROVIDER=llm
+HF_TOKEN=hf_your_token
+HUGGING_FACE_LLM_ENDPOINT=https://router.huggingface.co/cohere/compatibility/v1/chat/completions
+HF_LLM=command-a-03-2025
 ```
 
-### 4.2 Quick Setup (Production on AWS)
+### Option B — Amazon Bedrock + AWS Translate
 
-```bash
-# On the server, inside the cloned repo:
-cp .env.production.example .env.production
+```env
+LLM_PROVIDER=bedrock
+TRANSLATION_PROVIDER=aws_translate
 
-# Edit and fill in your API keys:
-nano .env.production
-
-# Then run deploy — it generates .env from .env.production automatically
-bash scripts/deploy.sh <YOUR_ELASTIC_IP>
+AWS_REGION=us-east-1
+AWS_ACCESS_KEY_ID=AKIA...
+AWS_SECRET_ACCESS_KEY=...
+BEDROCK_MODEL_ID=amazon.nova-lite-v1:0
+BEDROCK_MAX_TOKENS=4096
 ```
 
-### 4.3 Where to Get Each API Key
+> **Model note**: Amazon Nova Lite is Amazon's own model — it does not require AWS Marketplace subscription, making it ideal for free-tier accounts. For Anthropic models (e.g. `us.anthropic.claude-3-5-haiku-20241022-v1:0`), a valid payment method and Marketplace subscription are required.
 
-| Variable | Where to Get It |
-|----------|----------------|
-| `HF_TOKEN` | Sign up at [huggingface.co](https://huggingface.co), then go to **Settings > Access Tokens** and create a token with `read` scope. |
-| `JIO_API_KEY` | Obtain from your Jio AI / Jio Translate platform account. Contact your Jio platform admin if you don't have access. |
-| `JIOMEET_APP_ID` | Register at [jiomeetpro.jio.com](https://jiomeetpro.jio.com), create an app under **Platform API**, and copy the App ID. |
+When running on EC2 with an IAM role that has `bedrock:InvokeModel` and `translate:TranslateText` permissions, you can omit `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` — the SDK will use the instance role automatically.
 
-### 4.4 Generating the RSA Key Pair (for JioMeet)
+### Required IAM Policy
 
-The backend needs an RSA key pair to authenticate with JioMeet. Generate it on the server:
+The IAM user/role needs permissions for both foundation models and inference profiles:
 
-```bash
-cd backend/keys/
-
-# Generate private key
-openssl genrsa -out RSA-PrivateKey.pem 2048
-
-# Extract public key
-openssl rsa -in RSA-PrivateKey.pem -pubout -out RSA-PublicKey.pub
-
-# Set permissions
-chmod 600 RSA-PrivateKey.pem
-chmod 644 RSA-PublicKey.pub
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream"
+      ],
+      "Resource": [
+        "arn:aws:bedrock:*::foundation-model/*",
+        "arn:aws:bedrock:*:*:inference-profile/*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": "translate:TranslateText",
+      "Resource": "*"
+    }
+  ]
+}
 ```
 
-> **Note**: Upload the public key (`RSA-PublicKey.pub`) to your JioMeet app configuration. The private key stays on the server only.
+### Option C — Mixed (Bedrock LLM + LLM Translation)
 
-### 4.5 Generating JWT Secrets
+You can mix providers freely:
 
-The deploy script auto-generates JWT secrets if they still have `CHANGE_ME` placeholders. To generate them manually:
-
-```bash
-# Generate 4 random secrets
-openssl rand -hex 32   # → use for JWT_ADMIN_SECRET
-openssl rand -hex 32   # → use for JWT_OFFICIAL_SECRET
-openssl rand -hex 32   # → use for JWT_CITIZEN_SECRET
-openssl rand -hex 32   # → use for JWT_REFRESH_SECRET
+```env
+LLM_PROVIDER=bedrock
+TRANSLATION_PROVIDER=llm
 ```
 
-Paste each into your `.env.production` file.
+### Verifying Active Providers
 
-### 4.6 Updating Environment Variables After Deployment
-
-If you need to change an API key or add a new variable after the app is already running:
+After starting the application, check the health endpoint:
 
 ```bash
-cd ~/ai4bharat-empowerpanchayat
-
-# 1. Edit the production template
-nano .env.production
-
-# 2. Regenerate .env with your server IP
-sed "s/<YOUR_SERVER_IP>/$(curl -s https://checkip.amazonaws.com)/g" .env.production > .env
-
-# 3. Restart affected services
-docker-compose -f docker-compose.prod.yml up -d --build backend
-docker-compose -f docker-compose.prod.yml up -d --build video-mom-backend
+curl http://localhost:8000/health/services | jq .active_providers
+# {"stt":"jio","llm":"bedrock","translation":"aws_translate"}
 ```
-
-### 4.7 Environment Files Reference
-
-| File | Purpose | Committed to Git? |
-|------|---------|-------------------|
-| `.env.example` | Root template (docker-compose) | Yes |
-| `.env` | Root with real secrets | **No** |
-| `.env.production.example` | Production template | Yes |
-| `.env.production` | Production with real secrets | **No** |
-| `backend/.env.example` | Backend template | Yes |
-| `backend/.env` | Backend with real secrets | **No** |
-| `frontend/.env.example` | Frontend template | Yes |
-| `frontend/.env` | Frontend with real values | **No** |
-| `video-mom-backend/.env.example` | Video-MOM template | Yes |
-| `video-mom-backend/.env` | Video-MOM with real secrets | **No** |
 
 ---
 
@@ -420,20 +406,17 @@ You should see the Amazon Linux welcome message.
 
 ## Step 7 — Setup the Server
 
-Run the included setup script. This installs Docker, Docker Compose, git, and sets up swap space.
+Run the included setup script. This installs Docker, Docker Compose, and sets up swap space.
 
 ```bash
 # Still on the EC2 instance via SSH:
 cd ~
 
-# Install git first (not pre-installed on Amazon Linux 2023)
-sudo yum install -y git
+# Clone the repo first
+git clone https://github.com/empowerpanchayat/eGramSabha.git
+cd eGramSabha
 
-# Clone the repo
-git clone https://github.com/anshuljain90/ai4bharat-empowerpanchayat.git
-cd ai4bharat-empowerpanchayat
-
-# Run server setup (installs Docker, Compose, swap, etc.)
+# Run server setup
 bash scripts/setup-server.sh
 ```
 
@@ -455,49 +438,31 @@ docker ps
 
 ## Step 8 — Clone and Deploy
 
-### 8.1 Configure Environment Variables
+### 8.1 Edit API keys in .env.production (if needed)
+
+The `.env.production` file already has your API keys pre-filled. The only placeholder you need to replace is `<YOUR_SERVER_IP>`.
+
+The deploy script handles this automatically:
 
 ```bash
-cd ~/ai4bharat-empowerpanchayat
+cd ~/eGramSabha
 
-# Create .env.production from the template
-cp .env.production.example .env.production
-
-# Edit and fill in your real API keys (HF_TOKEN, JIO_API_KEY, JIOMEET_APP_ID)
-nano .env.production
-```
-
-> See [Section 4 — Configuring Environment Variables](#4-configuring-environment-variables) for details on where to get each API key and how to generate RSA keys.
-
-### 8.2 Generate RSA Keys for JioMeet
-
-```bash
-cd ~/ai4bharat-empowerpanchayat/backend/keys/
-openssl genrsa -out RSA-PrivateKey.pem 2048
-openssl rsa -in RSA-PrivateKey.pem -pubout -out RSA-PublicKey.pub
-chmod 600 RSA-PrivateKey.pem
-cd ~/ai4bharat-empowerpanchayat
-```
-
-### 8.3 Deploy
-
-```bash
+# Deploy with your Elastic IP
 bash scripts/deploy.sh <YOUR_ELASTIC_IP>
 ```
 
 **What this does:**
-1. Reads `.env.production`, replaces `<YOUR_SERVER_IP>` with your IP, generates `.env`
-2. Auto-generates JWT secrets if they still have placeholder values
-3. Copies the production Nginx config
-4. Builds all Docker images (5-10 minutes on first run)
-5. Starts all 4 containers
+1. Replaces `<YOUR_SERVER_IP>` in `.env.production` with your actual IP and generates `.env`
+2. Copies the production Nginx config
+3. Builds all Docker images (5-10 minutes on first run)
+4. Starts all 4 containers
 
-### 8.4 Watch the build (optional)
+### 8.2 Watch the build (optional)
 
 In another terminal:
 ```bash
 ssh -i ~/.ssh/egramsabha-key.pem ec2-user@<YOUR_ELASTIC_IP>
-cd ~/ai4bharat-empowerpanchayat
+cd ~/eGramSabha
 docker-compose -f docker-compose.prod.yml logs -f
 ```
 
@@ -604,7 +569,7 @@ docker-compose -f docker-compose.prod.yml up -d --build frontend
 ```bash
 sudo crontab -e
 # Add:
-0 3 * * * certbot renew --pre-hook "cd /home/ec2-user/ai4bharat-empowerpanchayat && docker-compose -f docker-compose.prod.yml stop frontend" --post-hook "cd /home/ec2-user/ai4bharat-empowerpanchayat && docker-compose -f docker-compose.prod.yml start frontend"
+0 3 * * * certbot renew --pre-hook "cd /home/ec2-user/eGramSabha && docker-compose -f docker-compose.prod.yml stop frontend" --post-hook "cd /home/ec2-user/eGramSabha && docker-compose -f docker-compose.prod.yml start frontend"
 ```
 
 ### Option B: Without a domain (Self-signed — shows browser warning)
@@ -626,7 +591,7 @@ sudo openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
 ### MongoDB Backups
 
 ```bash
-cd ~/ai4bharat-empowerpanchayat
+cd ~/eGramSabha
 bash scripts/setup-backups.sh
 ```
 
@@ -645,7 +610,7 @@ bash scripts/monitor.sh
 # Add to cron for automatic monitoring every 5 minutes
 crontab -e
 # Add:
-*/5 * * * * /home/ec2-user/ai4bharat-empowerpanchayat/scripts/monitor.sh >> ~/logs/monitor.log 2>&1
+*/5 * * * * /home/ec2-user/eGramSabha/scripts/monitor.sh >> ~/logs/monitor.log 2>&1
 ```
 
 ### View Logs
@@ -669,7 +634,7 @@ docker stats
 When you push new code:
 
 ```bash
-cd ~/ai4bharat-empowerpanchayat
+cd ~/eGramSabha
 
 # Update everything
 bash scripts/update.sh
@@ -779,7 +744,7 @@ docker image prune -a -f        # Remove ALL unused images
 ssh -i ~/.ssh/egramsabha-key.pem ec2-user@<ELASTIC_IP>
 
 # Start
-cd ~/ai4bharat-empowerpanchayat && docker-compose -f docker-compose.prod.yml up -d
+cd ~/eGramSabha && docker-compose -f docker-compose.prod.yml up -d
 
 # Stop
 docker-compose -f docker-compose.prod.yml down
