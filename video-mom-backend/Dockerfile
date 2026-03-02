@@ -45,7 +45,6 @@ WORKDIR /app
 
 # Copy application code
 COPY --chown=appuser:appuser app/ ./app/
-COPY --chown=appuser:appuser .env ./
 
 # Create required directories with proper permissions
 RUN mkdir -p temp_storage && \
