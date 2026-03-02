@@ -71,7 +71,8 @@ services:
       - HF_LLM=${HF_LLM}
       - MONGODB_URL=mongodb://mongodb:27017
       - DATABASE_NAME=${DATABASE_NAME:-voter_registration}
-      - STT_PROVIDER=${STT_PROVIDER:-whisper}
+      - STT_PROVIDER=${STT_PROVIDER:-aws_transcribe}
+      - AWS_TRANSCRIBE_BUCKET=${AWS_TRANSCRIBE_BUCKET:-egramsabha-transcribe-temp}
       - LLM_PROVIDER=${LLM_PROVIDER:-bedrock}
       - TRANSLATION_PROVIDER=${TRANSLATION_PROVIDER:-aws_translate}
       - AWS_REGION=${AWS_REGION:-us-east-1}

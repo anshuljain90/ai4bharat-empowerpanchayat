@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     DATABASE_NAME: str
 
     # --- AI Provider Selection ---
-    STT_PROVIDER: str = "jio"  # "jio" | "whisper"
+    STT_PROVIDER: str = "jio"  # "jio" | "whisper" | "aws_transcribe"
     LLM_PROVIDER: str = "huggingface"  # "huggingface" | "bedrock"
     TRANSLATION_PROVIDER: str = "llm"  # "llm" | "aws_translate"
 
@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     AWS_SECRET_ACCESS_KEY: Optional[str] = None
     BEDROCK_MODEL_ID: str = "anthropic.claude-3-sonnet-20240229-v1:0"
     BEDROCK_MAX_TOKENS: int = 4096
+    AWS_TRANSCRIBE_BUCKET: str = "egramsabha-transcribe-temp"
 
     class Config:
         # This tells pydantic to load variables from a .env file

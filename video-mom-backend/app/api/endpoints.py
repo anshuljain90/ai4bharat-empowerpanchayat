@@ -250,7 +250,14 @@ async def process_jio_transcription_async(request_id: str, tracker: RequestTrack
 
         # Select transcription function based on STT_PROVIDER config
         provider = settings.STT_PROVIDER.lower()
-        if provider == "whisper":
+        if provider == "aws_transcribe":
+            from app.services.aws_stt_transcriber import get_aws_stt_transcriber
+            aws_transcriber = get_aws_stt_transcriber()
+            logger.info(f"Processing transcription for request {request_id} with language: {language}, provider: AWS Transcribe")
+            transcribe_func = lambda audio_path: aws_transcriber.transcribe_audio(audio_path, language)
+            provider_name = "aws_transcribe"
+            provider_display = f"AWS Transcribe ({language})"
+        elif provider == "whisper":
             logger.info(f"Processing transcription for request {request_id} with language: {language}, provider: Whisper")
             transcribe_func = stt_transcriber.transcribe_audio
             provider_name = "whisper"
