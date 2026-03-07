@@ -30,12 +30,14 @@ const userSchema = new mongoose.Schema({
     default: []
   },
   faceImageId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'fs.files', // or your GridFS collection name
+    type: mongoose.Schema.Types.Mixed, // ObjectId (GridFS) or String (S3 key)
   },
   thumbnailImageId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'fs.files',
+    type: mongoose.Schema.Types.Mixed, // ObjectId (GridFS) or String (S3 key)
+  },
+  rekognitionFaceId: {
+    type: String,
+    default: null
   },
   isRegistered: {
     type: Boolean,

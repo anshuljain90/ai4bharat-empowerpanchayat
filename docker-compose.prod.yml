@@ -29,6 +29,7 @@ services:
     environment:
       - PORT=5000
       - MONGODB_URI=${MONGODB_URI:-mongodb://mongodb:27017/voter_registration}
+      - USE_DOCUMENTDB=${USE_DOCUMENTDB:-false}
       - NODE_ENV=production
       - CORS_ORIGIN=${CORS_ORIGIN}
       - BACKEND_URL=${BACKEND_URL}
@@ -41,10 +42,18 @@ services:
       - SUPPORT_PHONE=${SUPPORT_PHONE}
       - SUPPORT_CONTACT_NAME=${SUPPORT_CONTACT_NAME}
       - STORAGE_BACKEND=${STORAGE_BACKEND:-gridfs}
+      - S3_BUCKET=${S3_BUCKET:-egramsabha-assets}
+      - AWS_REGION=${AWS_REGION:-ap-south-1}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - JWT_ADMIN_SECRET=${JWT_ADMIN_SECRET}
       - JWT_OFFICIAL_SECRET=${JWT_OFFICIAL_SECRET}
       - JWT_CITIZEN_SECRET=${JWT_CITIZEN_SECRET}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - SECRETS_MANAGER_SECRET_NAME=${SECRETS_MANAGER_SECRET_NAME:-egramsabha/prod}
+      - FACE_VERIFICATION_PROVIDER=${FACE_VERIFICATION_PROVIDER:-local}
+      - SNS_ENABLED=${SNS_ENABLED:-false}
+      - CLOUDWATCH_LOG_GROUP=${CLOUDWATCH_LOG_GROUP:-/egramsabha/backend}
       - AGENDA_TRANSLATION_CRON=${AGENDA_TRANSLATION_CRON:-*/5 * * * *}
       - INITIATE_SUMMARY_CRON=${INITIATE_SUMMARY_CRON:-*/5 * * * *}
       - FETCH_SUMMARY_RESULTS_CRON=${FETCH_SUMMARY_RESULTS_CRON:-*/5 * * * *}
@@ -69,8 +78,9 @@ services:
       - STT_MODEL_ENDPOINT=${STT_MODEL_ENDPOINT}
       - HUGGING_FACE_LLM_ENDPOINT=${HUGGING_FACE_LLM_ENDPOINT}
       - HF_LLM=${HF_LLM}
-      - MONGODB_URL=mongodb://mongodb:27017
+      - MONGODB_URL=${MONGODB_URL:-mongodb://mongodb:27017}
       - DATABASE_NAME=${DATABASE_NAME:-voter_registration}
+      - USE_DOCUMENTDB=${USE_DOCUMENTDB:-false}
       - STT_PROVIDER=${STT_PROVIDER:-aws_transcribe}
       - AWS_TRANSCRIBE_BUCKET=${AWS_TRANSCRIBE_BUCKET:-egramsabha-transcribe-temp}
       - LLM_PROVIDER=${LLM_PROVIDER:-bedrock}
@@ -80,6 +90,11 @@ services:
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - BEDROCK_MODEL_ID=${BEDROCK_MODEL_ID:-amazon.nova-lite-v1:0}
       - BEDROCK_MAX_TOKENS=${BEDROCK_MAX_TOKENS:-4096}
+      - S3_BUCKET=${S3_BUCKET:-egramsabha-assets}
+      - CLOUDWATCH_LOG_GROUP=${CLOUDWATCH_LOG_GROUP:-/egramsabha/video-mom}
+      - COMPREHEND_ENABLED=${COMPREHEND_ENABLED:-true}
+      - TTS_PROVIDER=${TTS_PROVIDER:-polly}
+      - API_GATEWAY_API_KEY=${API_GATEWAY_API_KEY:-}
     volumes:
       - video_mom_temp_storage:/app/temp_storage
     depends_on:

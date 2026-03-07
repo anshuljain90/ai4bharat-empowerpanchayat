@@ -6,6 +6,8 @@ const Panchayat = require('../models/Panchayat');
 const { isCitizen } = require('../middleware/auth');
 const crypto = require('crypto');
 const { verifyRefreshToken } = require('../config/jwt');
+const rekognitionService = require('../services/rekognitionService');
+const logger = require('../utils/logger');
 
 // Helper function to calculate Euclidean distance between face descriptors
 const calculateFaceDistance = (descriptor1, descriptor2) => {
@@ -135,7 +137,7 @@ router.post('/face-login/init', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Face login initiation error:', error);
+        logger.error('Face login initiation error:', error);
         res.status(500).json({
             success: false,
             message: 'Error during face login initiation',
@@ -213,6 +215,31 @@ router.post('/face-login/verify', async (req, res) => {
                     message: 'Face verification failed',
                     distance: distance
                 });
+            }
+
+            // Server-side Rekognition verification (if enabled)
+            if (rekognitionService.isEnabled() && req.body.faceImage) {
+                try {
+                    const base64Data = req.body.faceImage.replace(/^data:image\/\w+;base64,/, '');
+                    const imgBuffer = Buffer.from(base64Data, 'base64');
+                    const match = await rekognitionService.searchFace(imgBuffer, user.panchayatId);
+                    if (!match) {
+                        return res.status(401).json({
+                            success: false,
+                            message: 'Server-side face verification failed — no match found'
+                        });
+                    }
+                    if (match.externalImageId !== user._id.toString()) {
+                        return res.status(401).json({
+                            success: false,
+                            message: 'Server-side face verification failed — identity mismatch'
+                        });
+                    }
+                    logger.info(`[Rekognition] Face verified for ${user.voterIdNumber}, similarity: ${match.similarity}%`);
+                } catch (rekErr) {
+                    // Non-blocking: if Rekognition is down, local check already passed
+                    logger.warn(`[Rekognition] Verification error (non-blocking): ${rekErr.message}`);
+                }
             }
 
             // Clear security token after successful verification
@@ -370,7 +397,7 @@ router.post('/face-login/verify', async (req, res) => {
             });
         }
     } catch (error) {
-        console.error('Face login verification error:', error);
+        logger.error('Face login verification error:', error);
         res.status(500).json({
             success: false,
             message: 'Error during face verification',
@@ -449,7 +476,7 @@ router.post('/refresh-token', async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Citizen token refresh error:', error);
+        logger.error('Citizen token refresh error:', error);
         res.status(401).json({
             success: false,
             message: 'Invalid or expired refresh token',
@@ -503,7 +530,7 @@ router.get('/me', isCitizen, async (req, res) => {
             }
         });
     } catch (error) {
-        console.error('Error fetching citizen profile:', error);
+        logger.error('Error fetching citizen profile:', error);
         res.status(500).json({
             success: false,
             message: 'Error fetching citizen profile',

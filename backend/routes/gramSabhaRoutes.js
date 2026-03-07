@@ -14,6 +14,8 @@ const multer = require("multer");
 const mongoose = require("mongoose");
 const User = require("../models/User");
 
+const notificationService = require("../services/notificationService");
+
 const { JIOMEET_APP_ID, JIOMEET_API, BACKEND_URL, PRIVATE_KEY_PATH, PUBLIC_KEY_PATH } = process.env;
 
 // Log JioMeet configuration status at startup
@@ -415,6 +417,26 @@ router.post(
 
       await gramSabha.save();
       console.log('[GramSabha Create] Saved successfully, id:', gramSabha._id, ', meetingLink:', gramSabha.meetingLink || 'NULL');
+
+      // Auto-notify citizens via SNS when Gram Sabha is scheduled
+      if (notificationService.isEnabled()) {
+        try {
+          const panchayatInfo = await Panchayat.findById(panchayatId);
+          const citizens = await User.find({
+            panchayatId,
+            mobileNumber: { $exists: true, $ne: "" },
+          }).select("_id mobileNumber name");
+          const dateStr = dateTime ? new Date(dateTime).toLocaleDateString("en-IN") : "upcoming date";
+          notificationService.notifyGramSabhaScheduled(
+            panchayatInfo?.name || "your Panchayat",
+            dateStr,
+            citizens
+          ).catch(err => console.error('[SNS] Notification error:', err.message));
+          console.log(`[SNS] Triggered notifications to ${citizens.length} citizens`);
+        } catch (snsErr) {
+          console.error('[SNS] Error triggering notifications:', snsErr.message);
+        }
+      }
 
       // Update issue summary and linked issues if selected agenda items are provided
       if (parsedSelectedItems.length > 0) {
@@ -1503,4 +1525,45 @@ router.get("/recordings/download", async (req, res) => {
     });
   }
 });
+// Send SMS notification to citizens about a scheduled Gram Sabha
+router.post("/:id/notify", auth.isOfficial, async (req, res) => {
+  try {
+    const gramSabha = await GramSabha.findById(req.params.id);
+    if (!gramSabha) {
+      return res.status(404).json({ success: false, message: "Gram Sabha not found" });
+    }
+
+    const panchayat = await Panchayat.findById(gramSabha.panchayatId);
+    if (!panchayat) {
+      return res.status(404).json({ success: false, message: "Panchayat not found" });
+    }
+
+    // Get citizens with mobile numbers
+    const citizens = await User.find({
+      panchayatId: gramSabha.panchayatId,
+      mobileNumber: { $exists: true, $ne: "" },
+    }).select("_id mobileNumber name");
+
+    const dateStr = gramSabha.meetingDate
+      ? new Date(gramSabha.meetingDate).toLocaleDateString("en-IN")
+      : "upcoming date";
+
+    const results = await notificationService.notifyGramSabhaScheduled(
+      panchayat.name,
+      dateStr,
+      citizens
+    );
+
+    res.json({
+      success: true,
+      message: `Notifications sent to ${citizens.length} citizens`,
+      snsEnabled: notificationService.isEnabled(),
+      results,
+    });
+  } catch (error) {
+    console.error("Notification error:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
 module.exports = router;

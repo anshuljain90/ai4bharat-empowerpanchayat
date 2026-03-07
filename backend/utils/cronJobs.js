@@ -1,9 +1,13 @@
 const cron = require('node-cron');
+const axios = require('axios');
 const { updateAllMeetingStatuses } = require('./meetingUtils');
 const Issue = require('../models/Issue');
 const transcriptionService = require('../services/transcriptionService');
 const { initiateSummaryGeneration, fetchSummaryResults, retryFailedSummaryRequests } = require('./summaryCronJobs');
 const { agendaTranslationCron } = require('./agendaTranslationCron');
+const logger = require('./logger');
+
+const VIDEO_MOM_URL = process.env.VIDEO_MOM_BACKEND_URL || 'http://video-mom-backend:8000';
 
 // Check transcription status every 5 minutes
 const checkTranscriptionStatus = cron.schedule('*/1 * * * *', async () => {
@@ -32,7 +36,28 @@ const checkTranscriptionStatus = cron.schedule('*/1 * * * *', async () => {
                     issue.transcription.completedAt = new Date();
                     issue.transcription.lastError = null;
                     await issue.save();
-                    
+
+                    // Trigger Comprehend analysis on completed transcription
+                    try {
+                        const analysisText = statusResult.enhancedEnglishTranscription || statusResult.transcription;
+                        if (analysisText && analysisText.trim()) {
+                            const comprehendRes = await axios.post(`${VIDEO_MOM_URL}/analyze/issue`, {
+                                text: analysisText,
+                                language: 'en'
+                            });
+                            if (comprehendRes.data && comprehendRes.data.sentiment) {
+                                issue.sentiment = comprehendRes.data.sentiment;
+                                issue.keyPhrases = comprehendRes.data.keyPhrases || [];
+                                if (comprehendRes.data.suggestedPriority === 'URGENT' && issue.priority !== 'URGENT') {
+                                    issue.priority = 'URGENT';
+                                }
+                                await issue.save();
+                            }
+                        }
+                    } catch (comprehendErr) {
+                        // Non-blocking — analysis failure shouldn't affect transcription flow
+                    }
+
                 } else if (statusResult.status === 'failed') {
                     // Update issue with failed status
                     issue.transcription.status = 'FAILED';

@@ -184,6 +184,20 @@ const issueSchema = new mongoose.Schema({
             default: null
         }
     },
+    sentiment: {
+        label: { type: String, default: null },
+        score: { type: Number, default: null },
+        scores: {
+            positive: { type: Number, default: null },
+            negative: { type: Number, default: null },
+            neutral: { type: Number, default: null },
+            mixed: { type: Number, default: null }
+        }
+    },
+    keyPhrases: {
+        type: [String],
+        default: []
+    },
     isSummarized: {
         type: Boolean,
         default: false

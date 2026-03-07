@@ -30,6 +30,17 @@ class Settings(BaseSettings):
     BEDROCK_MAX_TOKENS: int = 4096
     AWS_TRANSCRIBE_BUCKET: str = "egramsabha-transcribe-temp"
 
+    # CloudWatch Logging
+    CLOUDWATCH_LOG_GROUP: str = "/egramsabha/video-mom"
+    CLOUDWATCH_ENABLED: bool = True
+
+    # TTS (Polly)
+    TTS_PROVIDER: str = "polly"  # "polly" | "disabled"
+    S3_BUCKET: str = "egramsabha-assets"
+
+    # Comprehend
+    COMPREHEND_ENABLED: bool = True
+
     class Config:
         # This tells pydantic to load variables from a .env file
         env_file = ".env"

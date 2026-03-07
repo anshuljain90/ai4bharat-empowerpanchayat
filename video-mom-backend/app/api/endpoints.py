@@ -2,6 +2,7 @@ import os
 import asyncio
 import logging
 from fastapi import APIRouter, UploadFile, File, HTTPException, Body, Depends, Path
+from fastapi.responses import Response
 from typing import Dict, Any, List
 from app.services.audio_extractor import AudioExtractor
 from app.services.stt_transcriber import STTTranscriber
@@ -10,6 +11,8 @@ from app.services.request_tracker import RequestTracker
 from app.core.config import settings
 from app.services.file_storage import file_storage
 from app.services.llm_service import llm_service
+from app.services.tts_service import tts_service
+from app.services.comprehend_service import comprehend_service
 from app.core.database import get_database, RequestStatus, RequestType
 from motor.motor_asyncio import AsyncIOMotorDatabase
 
@@ -672,6 +675,63 @@ async def get_agenda_result(request_id: str, tracker: RequestTracker = Depends(g
 async def get_translation_result(request_id: str, tracker: RequestTracker = Depends(get_request_tracker)):
     """Get translation result"""
     return await _get_result_response(request_id, tracker, cleanup_files=False)
+
+# ======================= TTS ENDPOINT =======================
+
+@router.post("/tts/speak")
+async def text_to_speech(
+    text: str = Body(..., embed=True),
+    language: str = Body("hi", embed=True),
+):
+    """Convert text to speech using Amazon Polly with S3 caching."""
+    if not tts_service.is_available():
+        raise HTTPException(status_code=503, detail="TTS service not available")
+
+    if not text or not text.strip():
+        raise HTTPException(status_code=400, detail="Text is required")
+
+    try:
+        audio_data = await asyncio.to_thread(tts_service.synthesize, text, language)
+        return Response(content=audio_data, media_type="audio/mpeg")
+    except Exception as e:
+        logger.error(f"TTS error: {e}")
+        raise HTTPException(status_code=500, detail=f"TTS synthesis failed: {str(e)}")
+
+# ======================= COMPREHEND ENDPOINT =======================
+
+@router.post("/analyze/issue")
+async def analyze_issue(
+    text: str = Body(..., embed=True),
+    language: str = Body("en", embed=True),
+):
+    """Analyze issue text for sentiment and key phrases using Amazon Comprehend."""
+    if not comprehend_service.is_available():
+        raise HTTPException(status_code=503, detail="Comprehend service not available")
+
+    if not text or not text.strip():
+        raise HTTPException(status_code=400, detail="Text is required")
+
+    try:
+        result = await asyncio.to_thread(comprehend_service.analyze_issue, text, language)
+        return result
+    except Exception as e:
+        logger.error(f"Comprehend error: {e}")
+        raise HTTPException(status_code=500, detail=f"Analysis failed: {str(e)}")
+
+@router.post("/analyze/batch")
+async def analyze_issues_batch(
+    issues: List[Dict[str, Any]] = Body(..., embed=True),
+):
+    """Batch analyze multiple issues for sentiment and key phrases."""
+    if not comprehend_service.is_available():
+        raise HTTPException(status_code=503, detail="Comprehend service not available")
+
+    try:
+        results = await asyncio.to_thread(comprehend_service.batch_analyze, issues)
+        return {"results": results}
+    except Exception as e:
+        logger.error(f"Batch comprehend error: {e}")
+        raise HTTPException(status_code=500, detail=f"Batch analysis failed: {str(e)}")
 
 # ======================= HEALTH CHECK ENDPOINTS =======================
 

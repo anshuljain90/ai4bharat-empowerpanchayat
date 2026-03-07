@@ -60,7 +60,7 @@ const panchayatSchema = new mongoose.Schema({
   },
   letterheadConfig: {
     letterheadImageId: {
-      type: mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.Mixed, // ObjectId (GridFS) or String (S3 key)
       default: null
     },
     letterheadType: {
@@ -166,26 +166,9 @@ panchayatSchema.index({ state: 1, district: 1 });
 panchayatSchema.index({ state: 1, district: 1, block: 1 });
 panchayatSchema.index({ state: 1, district: 1, block: 1, name: 1 });
 
-// Text search index for dropdown filtering
-panchayatSchema.index(
-  {
-    state: "text",
-    district: "text",
-    block: "text",
-    name: "text",
-  },
-  {
-    weights: {
-      name: 4,
-      block: 3,
-      district: 2,
-      state: 1,
-    },
-    name: "location_text_index",
-    default_language: "none", // disable stemming (safer for Indian languages)
-    language_override: "dummyLang" // point to a non-existent field, so it never conflicts
-  }
-);
+// Note: $text index removed for DocumentDB compatibility.
+// Search uses regex fallback which is already implemented in all search endpoints.
+// DocumentDB does not support $text indexes — regex is the recommended alternative.
 
 // Pre-save middleware to update timestamps
 panchayatSchema.pre("save", function (next) {

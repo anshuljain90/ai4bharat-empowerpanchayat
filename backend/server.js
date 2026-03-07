@@ -9,6 +9,7 @@ const PlatformConfiguration = require("./models/PlatformConfiguration");
 const defaultSettings = require("./defaults/defaultPlatformSettings");
 const path = require("path");
 const storageService = require('./storage/storageService');
+const rekognitionService = require('./services/rekognitionService');
 
 const dotenv = require("dotenv");
 const helmet = require("helmet");
@@ -17,7 +18,9 @@ const hpp = require("hpp");
 const morgan = require("morgan");
 const rateLimit = require("express-rate-limit");
 const auth = require("./middleware/auth");
+const { loadSecrets } = require("./config/secrets");
 
+const logger = require("./utils/logger");
 const { startCronJobs, stopCronJobs } = require("./utils/cronJobs");
 
 // Load environment variables
@@ -85,9 +88,11 @@ app.use(
 app.use(xss()); // Prevent XSS attacks
 app.use(hpp()); // Prevent HTTP Parameter Pollution
 
-// Request logging for development
+// Request logging
 if (NODE_ENV === "development") {
   app.use(morgan("dev"));
+} else {
+  app.use(morgan("combined", { stream: logger.stream }));
 }
 
 // CORS configuration
@@ -111,16 +116,19 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir);
 }
 
-// MongoDB Connection
-const MONGODB_URI =
-  process.env.MONGODB_URI || "mongodb://localhost:27017/voter_registration";
+// MongoDB / DocumentDB Connection
+const { getConnectionUri, getMongooseOptions } = require("./config/database");
 
-mongoose
-  .connect(MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(async () => {})
-  .catch((err) => {
-    console.error("Database connection error:", err);
-  });
+(async () => {
+  try {
+    const uri = getConnectionUri();
+    const opts = await getMongooseOptions();
+    await mongoose.connect(uri, opts);
+    logger.info(`[DB] Connected to ${uri.includes('docdb') ? 'DocumentDB' : 'MongoDB'}`);
+  } catch (err) {
+    logger.error("Database connection error:", err);
+  }
+})();
 
 // File upload configuration
 const storage = multer.diskStorage({
@@ -220,13 +228,13 @@ app.post('/api/import-csv', auth.isAdmin, upload.single('file'), async (req, res
       .pipe(csv())
       .on("headers", (headers) => {
         // Log the exact headers from the CSV file
-        console.log("CSV Headers:", headers);
+        logger.info("CSV Headers:", headers);
         columnNames = headers;
       })
       .on("data", (data) => {
         // Debug the first row to see what's coming in
         if (results.length === 0) {
-          console.log("First row data:", data);
+          logger.info("First row data:", data);
         }
 
         // Handle the column name with trailing space: "Voter id number "
@@ -251,7 +259,7 @@ app.post('/api/import-csv', auth.isAdmin, upload.single('file'), async (req, res
 
         if (!voterIdValue) {
           skippedDueToMissingVoterID++;
-          console.log("Row missing voter ID:", data);
+          logger.warn("Row missing voter ID:", data);
           return; // Skip this row
         }
 
@@ -276,7 +284,7 @@ app.post('/api/import-csv', auth.isAdmin, upload.single('file'), async (req, res
       })
       .on("end", async () => {
         try {
-          console.log(
+          logger.info(
             `Processed ${results.length} rows from CSV for panchayat ${panchayatId}. Skipped ${skippedDueToMissingVoterID} rows.`
           );
 
@@ -321,7 +329,7 @@ app.post('/api/import-csv', auth.isAdmin, upload.single('file'), async (req, res
             skippedDueToMissingVoterID,
           });
         } catch (err) {
-          console.error("Import error:", err);
+          logger.error("Import error:", err);
           res
             .status(500)
             .json({
@@ -331,7 +339,7 @@ app.post('/api/import-csv', auth.isAdmin, upload.single('file'), async (req, res
         }
       });
   } catch (error) {
-    console.error("CSV import error:", error);
+    logger.error("CSV import error:", error);
     res.status(500).json({ success: false, message: "Internal server error." });
   }
 });
@@ -376,7 +384,7 @@ app.get('/api/stats', auth.isAdmin, async (req, res) => {
       issueStats,
     });
   } catch (error) {
-    console.error("Error fetching stats:", error);
+    logger.error("Error fetching stats:", error);
     res.status(500).json({ success: false, message: "Error fetching stats" });
   }
 });
@@ -385,8 +393,8 @@ app.get('/api/stats', auth.isAdmin, async (req, res) => {
 app.post('/api/register-face', auth.isAdmin, async (req, res) => {
   try {
     const { voterId, faceDescriptor, faceImage, panchayatId } = req.body;
-    console.log("Legacy register-face endpoint called with voterId:", voterId);
-    console.log("PanchayatId received:", panchayatId);
+    logger.info("Legacy register-face endpoint called with voterId:", voterId);
+    logger.info("PanchayatId received:", panchayatId);
 
     // Validate panchayatId is provided
     if (!panchayatId) {
@@ -434,7 +442,7 @@ app.post('/api/register-face', auth.isAdmin, async (req, res) => {
           existingUser.faceDescriptor,
           faceDescriptor
         );
-        console.log(
+        logger.info(
           `Face distance with ${existingUser.voterIdNumber}: ${distance}`
         );
 
@@ -452,7 +460,7 @@ app.post('/api/register-face', auth.isAdmin, async (req, res) => {
       });
     }
 
-    console.log("Attempting to save face image...");
+    logger.info("Attempting to save face image...");
     // Save face image if provided
     let faceImageId = null;
     if (faceImage) {
@@ -486,6 +494,21 @@ app.post('/api/register-face', auth.isAdmin, async (req, res) => {
       await user.save();
     }
 
+    // Index face in Rekognition if enabled
+    if (rekognitionService.isEnabled() && faceImage) {
+      try {
+        const base64Clean = faceImage.replace(/^data:image\/\w+;base64,/, "");
+        const imgBuffer = Buffer.from(base64Clean, 'base64');
+        const rekFaceId = await rekognitionService.indexFace(imgBuffer, panchayatId, user._id);
+        if (rekFaceId) {
+          user.rekognitionFaceId = rekFaceId;
+          logger.info(`Rekognition face indexed for user ${voterId}: ${rekFaceId}`);
+        }
+      } catch (rekErr) {
+        logger.warn(`Rekognition indexing failed for ${voterId}: ${rekErr.message}`);
+      }
+    }
+
     // Update user
     user.faceDescriptor = faceDescriptor;
     user.isRegistered = true;
@@ -506,7 +529,7 @@ app.post('/api/register-face', auth.isAdmin, async (req, res) => {
       },
     });
   } catch (error) {
-    console.error("Error registering face:", error);
+    logger.error("Error registering face:", error);
     res
       .status(500)
       .json({
@@ -548,7 +571,7 @@ app.get("/api/health", (req, res) => {
 });
 
 // Create default roles
-createDefaultRoles().catch(console.error);
+createDefaultRoles().catch(err => logger.error('Error creating default roles:', err));
 
 // Debug route for file paths
 app.get("/api/debug/paths", (req, res) => {
@@ -561,8 +584,7 @@ app.get("/api/debug/paths", (req, res) => {
 
 // Error handling middleware (should be last)
 app.use((err, req, res, next) => {
-  console.error(`Error: ${err.message}`);
-  console.error(err.stack);
+  logger.error(`Error: ${err.message}`, { stack: err.stack, path: req.path });
 
   const statusCode = err.statusCode || 500;
   const message = err.message || "Internal server error";
@@ -574,14 +596,17 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`Backend URL: ${BACKEND_URL}`);
-  console.log(`CORS Origin: ${CORS_ORIGIN}`);
-  console.log(`Environment: ${NODE_ENV}`);
-  console.log(`Swagger docs at ${BACKEND_URL}/api-docs`);
-});
+// Start server with secrets loaded first
+(async () => {
+  await loadSecrets();
+  app.listen(PORT, () => {
+    logger.info(`Server running on port ${PORT}`);
+    logger.info(`Backend URL: ${BACKEND_URL}`);
+    logger.info(`CORS Origin: ${CORS_ORIGIN}`);
+    logger.info(`Environment: ${NODE_ENV}`);
+    logger.info(`Swagger docs at ${BACKEND_URL}/api-docs`);
+  });
+})();
 
 // Helper function for face comparison
     function calculateFaceDistance(descriptor1, descriptor2) {
@@ -605,7 +630,7 @@ async function initializePlatformConfig() {
   const config = await PlatformConfiguration.findOne();
   if (!config) {
     await PlatformConfiguration.create({ settings: defaultSettings });
-    console.log("PlatformConfiguration initialized with default settings.");
+    logger.info("PlatformConfiguration initialized with default settings.");
   }
 }
 
@@ -617,11 +642,11 @@ mongoose.connection.once("open", async () => {
 
 // Initialize cron jobs
 try {
-    console.log(`[Server] Initializing cron jobs at ${new Date().toISOString()}`);
+    logger.info(`[Server] Initializing cron jobs at ${new Date().toISOString()}`);
     startCronJobs();
-    console.log(`[Server] Cron jobs initialized successfully`);
+    logger.info(`[Server] Cron jobs initialized successfully`);
 } catch (error) {
-    console.error(`[Server] Error initializing cron jobs:`, {
+    logger.error(`[Server] Error initializing cron jobs:`, {
         error: error.message,
         stack: error.stack
     });
