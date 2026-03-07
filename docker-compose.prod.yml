@@ -72,6 +72,8 @@ services:
       dockerfile: Dockerfile
     expose:
       - "8000"
+    ports:
+      - "8000:8000"
     environment:
       - JIO_API_KEY=${JIO_API_KEY}
       - HF_TOKEN=${HF_TOKEN}
