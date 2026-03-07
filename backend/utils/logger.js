@@ -13,7 +13,7 @@ const transports = [
 if (process.env.AWS_REGION || process.env.AWS_ACCESS_KEY_ID) {
   try {
     const WinstonCloudWatch = require('winston-cloudwatch');
-    transports.push(new WinstonCloudWatch({
+    const cwTransport = new WinstonCloudWatch({
       logGroupName: process.env.CLOUDWATCH_LOG_GROUP || '/egramsabha/backend',
       logStreamName: `${process.env.HOSTNAME || 'backend'}-${new Date().toISOString().split('T')[0]}`,
       awsRegion: process.env.AWS_REGION || 'ap-south-1',
@@ -26,7 +26,16 @@ if (process.env.AWS_REGION || process.env.AWS_ACCESS_KEY_ID) {
       messageFormatter: ({ level, message, ...meta }) => {
         return JSON.stringify({ level, message, timestamp: new Date().toISOString(), ...meta });
       }
-    }));
+    });
+    let cwErrorLogged = false;
+    cwTransport.on('error', (err) => {
+      if (!cwErrorLogged) {
+        cwErrorLogged = true;
+        console.warn(`[Logger] CloudWatch disabled: ${err.message}`);
+        cwTransport.enabled = false;
+      }
+    });
+    transports.push(cwTransport);
     console.log('[Logger] CloudWatch transport enabled');
   } catch (error) {
     console.warn('[Logger] CloudWatch transport not available:', error.message);
