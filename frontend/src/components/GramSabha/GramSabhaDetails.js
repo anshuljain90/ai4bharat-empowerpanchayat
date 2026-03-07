@@ -28,6 +28,7 @@ import {
   Help as HelpIcon,
   People as PeopleIcon
 } from '@mui/icons-material';
+import ReadAloudButton from '../ReadAloudButton';
 import html2pdf from 'html2pdf.js';
 import '../../fonts/NotoSansDevanagari-Regular-normal';
 import {
@@ -1184,10 +1185,16 @@ const GramSabhaDetails = ({ meetingId, user }) => {
                   )}
                   {meeting.agenda.map((item, index) => (
                     <Box key={item._id || index} sx={{ mb: 2, pb: 2, borderBottom: index < meeting.agenda.length - 1 ? '1px solid #e0e0e0' : 'none' }}>
-                      <Typography variant="subtitle1" fontWeight="medium" gutterBottom>
-                        {getMultilingualText(item, 'title') || `Agenda Item ${index + 1}`}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="subtitle1" fontWeight="medium" gutterBottom sx={{ mb: 0 }}>
+                          {getMultilingualText(item, 'title') || `Agenda Item ${index + 1}`}
+                        </Typography>
+                        <ReadAloudButton
+                          text={`${getMultilingualText(item, 'title') || ''}. ${getMultilingualText(item, 'description') || ''}`}
+                          language={meeting.language || 'hi'}
+                        />
+                      </Box>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
                         {getMultilingualText(item, 'description') || strings.noDescription}
                       </Typography>
                       {item.linkedIssues && item.linkedIssues.length > 0 && (

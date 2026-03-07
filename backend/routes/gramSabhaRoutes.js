@@ -424,6 +424,7 @@ router.post(
           const panchayatInfo = await Panchayat.findById(panchayatId);
           const citizens = await User.find({
             panchayatId,
+            isRegistered: true,
             mobileNumber: { $exists: true, $ne: "" },
           }).select("_id mobileNumber name");
           const dateStr = dateTime ? new Date(dateTime).toLocaleDateString("en-IN") : "upcoming date";
@@ -1538,9 +1539,10 @@ router.post("/:id/notify", auth.isOfficial, async (req, res) => {
       return res.status(404).json({ success: false, message: "Panchayat not found" });
     }
 
-    // Get citizens with mobile numbers
+    // Get registered citizens with mobile numbers
     const citizens = await User.find({
       panchayatId: gramSabha.panchayatId,
+      isRegistered: true,
       mobileNumber: { $exists: true, $ne: "" },
     }).select("_id mobileNumber name");
 
