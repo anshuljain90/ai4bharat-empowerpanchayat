@@ -70,6 +70,11 @@ async def validate_api_key(request, call_next):
     if request.url.path in ("/", "/health", "/health/services", "/openapi.json", "/docs", "/redoc"):
         return await call_next(request)
 
+    # Skip validation for internal Docker network requests (backend → video-mom-backend)
+    client_host = request.client.host if request.client else ""
+    if client_host.startswith("172.") or client_host in ("127.0.0.1", "::1", "localhost"):
+        return await call_next(request)
+
     api_key_required = os.environ.get("API_GATEWAY_API_KEY")
     if api_key_required:
         provided_key = request.headers.get("x-api-key")
