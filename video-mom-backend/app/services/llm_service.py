@@ -761,34 +761,38 @@ class LLMService:
         primary_language = primary_language.lower()
         # Use regular string concatenation to avoid f-string brace conflicts
         system_prompt = (
-            "You are an expert in creating formal Minutes of Meeting (MOM) documents from meeting transcriptions, "
-            "with deep knowledge of Indian Panchayat-level issues and regional languages. "
-            "Your task is to generate a professional MOM in English and Hindi (or another requested language) based on the provided meeting transcript.\n\n"
-            
-            "1. Input: A meeting transcript (provided by user)\n"
-            "2. Output: A VALID JSON STRING (parseable with json.loads()) with these exact keys:\n"
+            "You are an experienced Gram Sabha secretary who writes clear, readable meeting minutes. "
+            "You have deep knowledge of Indian Panchayat governance, rural development, and regional languages.\n\n"
+
+            "TASK: Generate Minutes of Meeting (MOM) from a Gram Sabha transcription.\n\n"
+
+            "WRITING STYLE:\n"
+            "- Write in clear, straightforward language that any villager can understand.\n"
+            "- Be specific — use names, locations, dates, and amounts mentioned in the transcript.\n"
+            "- Organize discussion points by the actual topics/issues discussed, not chronologically.\n"
+            "- For decisions and action items, clearly state what was decided, who is responsible, and any deadlines.\n"
+            "- Avoid bureaucratic jargon — write 'The Sarpanch said the road will be repaired by next month' "
+            "NOT 'It was resolved that road infrastructure remediation shall be undertaken within the forthcoming calendar month.'\n\n"
+
+            "MOM STRUCTURE:\n"
+            "- Meeting Overview: Date, time, location, attendees (if mentioned)\n"
+            "- Issues Discussed: Group by topic — for each, summarize the problem raised and any responses\n"
+            "- Decisions Made: What was agreed upon, with specifics\n"
+            "- Action Items: Who will do what, and by when\n"
+            "- Next Steps: Follow-ups, next meeting date if mentioned\n\n"
+
+            "OUTPUT FORMAT: A VALID JSON STRING (parseable with json.loads()) with these exact keys:\n"
             "{\n"
-            '  \"english_mom\": \"Plain text MOM in English (no formatting)\",\n'
-            '  \"hindi_mom\": \"Plain text MOM in Hindi (no formatting)\",\n'
-            f'  \"{primary_language}_mom\": \"MOM in the requested primary language\"\n'
+            '  "english_mom": "Plain text MOM in English (no markdown formatting)",\n'
+            '  "hindi_mom": "Plain text MOM in Hindi (no markdown formatting)",\n'
+            f'  "{primary_language}_mom": "MOM in the requested primary language"\n'
             "}\n\n"
-            
-            "3. MOM Structure:\n"
-            "- Meeting Overview (Date, Time, Attendees, Location)\n"
-            "- Key Discussion Points (Organized by topic/issue)\n"
-            "- Decisions Made (Clear, actionable resolutions)\n"
-            "- Action Items (Who is responsible, what they must do, and by when)\n"
-            "- Next Steps (Future meetings, follow-ups, deadlines)\n\n"
-            
-            "4. Strict Rules:\n"
-            "1. Use formal, professional language suitable for government records.\n"
-            "2. Keep content clear and simple for villagers to understand.\n"
-            "3. Include specific details (names, locations, dates) where available.\n"
-            "4. Organize information logically and chronologically.\n"
-            "5. Do not add any information not present in the transcript.\n"
-            "6. Ensure consistency across all language versions.\n"
-            "7. No formatting (plain text only inside JSON).\n"
-            "8. Return ONLY the JSON object, no additional text or explanations."
+
+            "RULES:\n"
+            "1. Do not add any information not present in the transcript.\n"
+            "2. Ensure all three language versions cover the same content.\n"
+            "3. Plain text only inside JSON values — no markdown, no bullet characters, no special formatting.\n"
+            "4. Return ONLY the JSON object, no additional text."
         )
 
         messages = [
@@ -862,25 +866,29 @@ class LLMService:
         primary_language = primary_language.lower()
         # Use string concatenation to avoid f-string brace conflicts
         system_prompt = (
-            "You are an expert in creating formal Minutes of Meeting (MOM) documents from meeting summaries "
-            "and are deeply familiar with Indian Panchayat-level issues.\n"
+            "You are an experienced Gram Sabha secretary who writes clear, readable meeting minutes. "
+            "You have deep knowledge of Indian Panchayat governance and rural development.\n\n"
             "You will be given a collection of key points, decisions, and action items extracted from a meeting. "
-            "Your task is to synthesize these points into a single, coherent, well-structured MOM document.\n\n"
+            "Synthesize them into a single, coherent MOM document.\n\n"
+            "WRITING STYLE:\n"
+            "- Write in clear, straightforward language that any villager can understand.\n"
+            "- Be specific with names, locations, dates, and amounts where available.\n"
+            "- Avoid bureaucratic jargon — keep it conversational and direct.\n\n"
             "Return your response as a single JSON object with these keys:\n"
-            f"- {primary_language}_mom: The final, formatted MOM in the requested language.\n"
-            "- english_mom: The final, formatted MOM in English.\n"
-            "- hindi_mom: The final, formatted MOM in Hindi.\n\n"
+            f"- {primary_language}_mom: The MOM in the requested language.\n"
+            "- english_mom: The MOM in English.\n"
+            "- hindi_mom: The MOM in Hindi.\n\n"
             "MOM STRUCTURE:\n"
             "1. Meeting Overview (Date, Time, Attendees - if available)\n"
-            "2. Key Discussion Points (Organized by topic)\n"
-            "3. Decisions Made\n"
-            "4. Action Items (Who, What, When)\n\n"
+            "2. Issues Discussed (Organized by topic, with problems raised and responses)\n"
+            "3. Decisions Made (What was agreed, with specifics)\n"
+            "4. Action Items (Who will do what, by when)\n\n"
             "RULES:\n"
-            "- Use the provided points to build the MOM. Do not add information not present in the source.\n"
-            "- Organize the information logically.\n"
-            "- Ensure the final output is professional and well-formatted.\n"
-            f"- The primary language for the MOM should be {primary_language}, but provide both English and Hindi versions.\n"
-            "- Return ONLY the JSON object, no additional text or explanations."
+            "- Do not add information not present in the source points.\n"
+            "- Organize by topic, not chronologically.\n"
+            f"- Provide all three language versions ({primary_language}, English, Hindi) with the same content.\n"
+            "- Plain text only — no markdown or special formatting.\n"
+            "- Return ONLY the JSON object, no additional text."
         )
 
         messages = [
@@ -961,35 +969,57 @@ class LLMService:
         
         # Use regular string concatenation to avoid f-string brace conflicts
         system_prompt = (
-            "You are an expert secretary for Gram Sabha meetings and deeply familiar with Indian Panchayat-level issues and regional languages.\n\n"
-            "Your task is to create a structured meeting agenda from a list of issues, clustering similar issues together. "
-            "You must provide the agenda in English, Hindi, and a requested primary language.\n\n"
-            
-            "1. Input: A list of issues (provided by user)\n"
-            "2. Output: A VALID JSON STRING (parseable with json.loads()) with these exact keys:\n"
+            "You are an expert secretary for Gram Sabha meetings with deep knowledge of Indian Panchayat governance, "
+            "rural development schemes, and regional languages.\n\n"
+
+            "TASK: Create a structured meeting agenda by intelligently grouping related citizen issues.\n\n"
+
+            "HOW TO CLUSTER ISSUES:\n"
+            "- First, look at each issue's Category and Subcategory — issues sharing the same subcategory are strong candidates for grouping.\n"
+            "- Then, look deeper at the actual problem described. Two issues may have the same category but describe very different real-world problems — keep them separate.\n"
+            "- Conversely, issues with slightly different categories but describing the same ground-level problem (e.g., 'no streetlights' and 'dark roads at night') should be merged.\n"
+            "- Think practically: what would a Sarpanch discuss as ONE topic in a meeting? That is one agenda item.\n"
+            "- Prefer fewer, well-grouped agenda items over many scattered ones. But do NOT force unrelated issues together.\n\n"
+
+            "WRITING STYLE FOR TITLES AND DESCRIPTIONS:\n"
+            "- Titles should read like a villager would say it — natural, specific, and human. "
+            "For example: 'Broken road near the school' NOT 'Road Infrastructure Damage in Educational Zone'.\n"
+            "- Descriptions should briefly explain what the problem is and who it affects, in plain conversational language. "
+            "For example: 'Several families report the main road to the school has large potholes, making it unsafe for children and vehicles.' "
+            "NOT 'Multiple complaints regarding road surface deterioration in the vicinity of educational institution.'\n"
+            "- Include location names and specific details when available.\n"
+            "- Avoid bureaucratic or technical jargon.\n\n"
+
+            "OUTPUT FORMAT: A VALID JSON STRING (parseable with json.loads()) with these exact keys:\n"
             "{\n"
-            f'  "{primary_language}_agenda": "A list of structured agenda items in the requested primary language",\n'
-            '  "english_agenda": "A list of structured agenda items in English",\n'
-            '  "hindi_agenda": "A list of structured agenda items in Hindi"\n'
+            f'  "{primary_language}_agenda": [list of agenda items in the requested language],\n'
+            '  "english_agenda": [list of agenda items in English],\n'
+            '  "hindi_agenda": [list of agenda items in Hindi]\n'
             "}\n\n"
-            
-            "3. Agenda Item Structure (Each item in the list must be a JSON object):\n"
+
+            "Each agenda item must be a JSON object:\n"
             "{\n"
-            '   "title": "Very short problem summary (5-8 words)",\n'
-            '   "description": "1-line plain language explanation",\n'
+            '   "title": "Natural, specific summary of the problem (5-10 words)",\n'
+            '   "description": "Plain language explanation of the problem and who it affects (1-2 sentences)",\n'
             '   "issue_ids": {\n'
-            '        "issue_id": "a 2-3 word summary of issue"\n'
+            '        "issue_id": "2-3 word summary of that specific issue"\n'
             '    }\n'
             "}\n\n"
 
-            "4. Strict Rules:\n"
-            "1. GROUP similar issues by matching their core problems (ignore minor wording differences).\n"
-            "2. For each group, create ONE agenda item.\n"
-            "3. Never split the same issue ID across multiple items.\n"
-            "4. Keep titles specific (include location if relevant).\n"
-            "5. Make descriptions clear and simple for villagers to understand.\n"
-            "6. Ensure consistency across all language versions.\n"
-            "7. Return ONLY the JSON object, no additional text or explanations."
+            "EXAMPLE (for reference only, do not copy):\n"
+            "{\n"
+            '   "title": "Waterlogging on the main market road",\n'
+            '   "description": "Rainwater collects on the road near the weekly market, making it difficult for shopkeepers and customers. The drain is blocked and needs cleaning.",\n'
+            '   "issue_ids": {\n'
+            '        "ISS-101": "blocked drain near market",\n'
+            '        "ISS-107": "waterlogged road"\n'
+            '    }\n'
+            "}\n\n"
+
+            "RULES:\n"
+            "1. Each issue ID must appear in exactly one agenda item — never split across multiple.\n"
+            "2. Ensure all three language versions have the same groupings and issue_ids.\n"
+            "3. Return ONLY the JSON object, no additional text."
         )
 
         messages = [
@@ -1084,44 +1114,50 @@ class LLMService:
         new_issues_text = self._format_issues_for_prompt(new_issues)
         primary_language = primary_language.lower()
         system_prompt = (
-            "You are an expert secretary for Gram Sabha meetings and deeply familiar with Indian Panchayat-level issues and regional languages.\n\n"
-            "Your task is to update a structured meeting agenda from a list of issues, clustering similar issues together. "
-            "You must provide the updated agenda in English, Hindi, and a requested primary language.\n\n"
+            "You are an expert secretary for Gram Sabha meetings with deep knowledge of Indian Panchayat governance, "
+            "rural development schemes, and regional languages.\n\n"
 
-            "1. Input:\n"
-            "- A current agenda (as a JSON-formatted string).\n"
-            "- A list of new issues to integrate.\n\n"
+            "TASK: Update an existing meeting agenda by integrating new citizen issues into it.\n\n"
 
-            "2. Output: A VALID JSON STRING (parseable with json.loads()) with these exact keys:\n"
+            "HOW TO INTEGRATE NEW ISSUES:\n"
+            "- Check if a new issue fits naturally into an existing agenda item — if so, add it there.\n"
+            "- Use the issue's Category and Subcategory as a strong signal, but also read the description to judge if it truly belongs.\n"
+            "- If a new issue doesn't match any existing item, create a new agenda item for it.\n"
+            "- You may also re-title or update descriptions of existing items to better reflect the combined set of issues.\n"
+            "- Think practically: what would a Sarpanch discuss as ONE topic? That is one agenda item.\n\n"
+
+            "WRITING STYLE FOR TITLES AND DESCRIPTIONS:\n"
+            "- Titles should read like a villager would say it — natural, specific, and human. "
+            "For example: 'Broken road near the school' NOT 'Road Infrastructure Damage in Educational Zone'.\n"
+            "- Descriptions should briefly explain what the problem is and who it affects, in plain conversational language.\n"
+            "- Include location names and specific details when available.\n"
+            "- Avoid bureaucratic or technical jargon.\n\n"
+
+            "OUTPUT FORMAT: A VALID JSON STRING (parseable with json.loads()) with these exact keys:\n"
             "{\n"
-            f'  "{primary_language}_agenda": "The updated list of structured agenda items in the requested language",\n'
-            '  "english_agenda": "The updated list of structured agenda items in English",\n'
-            '  "hindi_agenda": "The updated list of structured agenda items in Hindi"\n'
+            f'  "{primary_language}_agenda": [updated list of agenda items in the requested language],\n'
+            '  "english_agenda": [updated list of agenda items in English],\n'
+            '  "hindi_agenda": [updated list of agenda items in Hindi]\n'
             "}\n\n"
 
-            "3. Agenda Item Structure (Each item in the list must be a JSON object with the following 4 fields:\n"
+            "Each agenda item must be a JSON object with these 4 fields:\n"
             "{\n"
-            '   "title": "Very short problem summary (5-8 words)",\n'
-            '   "description": "1-line plain language explanation",\n'
-            '   "linked_issues": [ "issue_id1", "issue_id2" ],\n'
+            '   "title": "Natural, specific summary of the problem (5-10 words)",\n'
+            '   "description": "Plain language explanation of the problem and who it affects (1-2 sentences)",\n'
+            '   "linked_issues": ["issue_id1", "issue_id2"],\n'
             '   "issue_ids": {\n'
-            '        "issue_id1": "short label",\n'
-            '        "issue_id2": "short label"\n'
+            '        "issue_id1": "2-3 word summary",\n'
+            '        "issue_id2": "2-3 word summary"\n'
             '    }\n'
             "}\n\n"
 
-            "Both `linked_issues` and `issue_ids` are mandatory for each agenda item.\n"
-            "`linked_issues` should be an array of valid issue IDs.\n"
-            "`issue_ids` must be a mapping from issue ID → short summary of that specific issue (2-4 words).\n\n"
+            "Both `linked_issues` (array) and `issue_ids` (mapping) are mandatory for every agenda item.\n\n"
 
-            "4. Strict Rules:\n"
-            "1. GROUP similar issues by matching their core problems (ignore minor wording differences).\n"
-            "2. For each group, create ONE agenda item with proper `linked_issues` and `issue_ids`.\n"
-            "3. Never split the same issue ID across multiple items.\n"
-            "4. Keep titles specific (include location if relevant).\n"
-            "5. Make descriptions clear and simple for villagers to understand.\n"
-            "6. Ensure consistency across all language versions.\n"
-            "7. Return ONLY the JSON object, no additional text or explanations."
+            "RULES:\n"
+            "1. Each issue ID must appear in exactly one agenda item — never split across multiple.\n"
+            "2. Preserve all existing issue IDs from the current agenda — do not drop any.\n"
+            "3. Ensure all three language versions have the same groupings and issue_ids.\n"
+            "4. Return ONLY the JSON object, no additional text."
         )
 
         messages = [
@@ -1184,15 +1220,21 @@ class LLMService:
             }
 
     def _format_issues_for_prompt(self, issues: list) -> str:
-        """Format issues data for the LLM prompt"""
+        """Format issues data for the LLM prompt with all available context"""
         formatted_issues = []
         for issue in issues:
-            issue_text = f"""Issue ID: {issue.get('id', 'N/A')}
-Category: {issue.get('category', 'General')}
-Subcategory: {issue.get('subcategory', 'N/A')}
-Description: {issue.get('description', issue.get('transcription', 'No description available'))}
----"""
-            formatted_issues.append(issue_text)
+            parts = [
+                f"Issue ID: {issue.get('id', 'N/A')}",
+                f"Category: {issue.get('category', 'General')}",
+                f"Subcategory: {issue.get('subcategory', 'N/A')}",
+            ]
+            if issue.get('priority'):
+                parts.append(f"Priority: {issue['priority']}")
+            if issue.get('location'):
+                parts.append(f"Location: {issue['location']}")
+            parts.append(f"Description: {issue.get('description', issue.get('transcription', 'No description available'))}")
+            parts.append("---")
+            formatted_issues.append("\n".join(parts))
         return "\n".join(formatted_issues)
 
     def _parse_multilingual_response(self, content: str, primary_language: str, content_type: str) -> Optional[Dict[str, str]]:
