@@ -752,15 +752,16 @@ router.post('/:issueId/transcription/retry', anyAuthenticated, async (req, res) 
             });
         }
 
-        // Check if transcription is in failed state
-        if (!issue.transcription || issue.transcription.status !== 'FAILED') {
-            console.error(`[IssueRoutes] Transcription not in failed state for retry:`, {
+        // Allow retry for FAILED or COMPLETED transcriptions (officials may want to re-transcribe for better quality)
+        const retryableStatuses = ['FAILED', 'COMPLETED'];
+        if (!issue.transcription || !retryableStatuses.includes(issue.transcription.status)) {
+            console.error(`[IssueRoutes] Transcription not in retryable state:`, {
                 issueId: issue._id,
                 currentStatus: issue.transcription?.status
             });
             return res.status(400).json({
                 success: false,
-                message: 'Transcription is not in failed state'
+                message: 'Transcription is not in a retryable state'
             });
         }
 

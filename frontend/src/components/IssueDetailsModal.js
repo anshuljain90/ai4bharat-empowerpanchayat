@@ -192,7 +192,12 @@ const IssueDetailsModal = ({ issue, tabValue, open, onClose }) => {
                                             {getTranscriptionStatusChip(transcriptionData.status)}
                                         </Box>
                                         {transcriptionData.status === 'COMPLETED' && (
-                                            <Typography variant="body2">{transcriptionData.text}</Typography>
+                                            <Box>
+                                                <Typography variant="body2" sx={{ mb: 2 }}>{transcriptionData.text}</Typography>
+                                                <Button size="small" variant="outlined" onClick={handleRetryTranscription} startIcon={<RefreshIcon />}>
+                                                    {strings.retryTranscription}
+                                                </Button>
+                                            </Box>
                                         )}
                                         {transcriptionData.status === 'FAILED' && (
                                             <Box>
