@@ -2,10 +2,7 @@ const mongoose = require('mongoose');
 const Issue = require('../../models/Issue');
 
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/voter_registration', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-});
+mongoose.connect('mongodb://localhost:27017/voter_registration');
 
 async function migrateDescriptionField() {
     try {

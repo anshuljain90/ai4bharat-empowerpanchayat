@@ -85,10 +85,7 @@ function getConnectionUri() {
  */
 async function getMongooseOptions() {
   const uri = process.env.MONGODB_URI || '';
-  const options = {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  };
+  const options = {};
 
   if (isDocumentDB(uri)) {
     const caPath = await ensureCACertificate();

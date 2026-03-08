@@ -12,13 +12,11 @@ const panchayatSchema = new mongoose.Schema({
     type: String,
     required: true,
     maxlength: 100,
-    index: true,
   },
   district: {
     type: String,
     required: true,
     maxlength: 100,
-    index: true,
   },
   block: {
     type: String,

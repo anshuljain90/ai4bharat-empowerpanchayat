@@ -1,5 +1,5 @@
 # Multi-stage build for optimized image
-FROM python:3.9-slim as builder
+FROM python:3.11-slim as builder
 
 # Set build arguments
 ARG DEBIAN_FRONTEND=noninteractive
@@ -21,7 +21,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # Production stage
-FROM python:3.9-slim
+FROM python:3.11-slim
 
 # Set build arguments
 ARG DEBIAN_FRONTEND=noninteractive
