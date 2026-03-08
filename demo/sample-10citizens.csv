@@ -1,0 +1,11 @@
+Name,Gender,Father Name,Husband Name,Mother Name,Address,Caste Category,Caste,Mobile number,Voter id number
+Rajesh Kumar,Male,Shiv Prasad,,,H.no 1 Ward 1,Other Backward Classes,BC-A,9876543210,HRX0012345
+Sunita Devi,Female,,Rajesh Kumar,,H.no 1 Ward 1,Other Backward Classes,BC-A,9876543210,HRX0012346
+Amit Kumar,Male,Rajesh Kumar,,,H.no 1 Ward 1,Other Backward Classes,BC-A,9876543211,HRX0012347
+Pooja Rani,Female,Rajesh Kumar,,,H.no 1 Ward 1,Other Backward Classes,BC-A,9876543211,HRX0012348
+Ramesh Chand,Male,Babu Lal,,,H.no 2 Ward 1,General,GEN,9812345678,HRX0023456
+Kamla Devi,Female,,Ramesh Chand,,H.no 2 Ward 1,General,GEN,9812345678,HRX0023457
+Vikas Sharma,Male,Ramesh Chand,,,H.no 2 Ward 1,General,GEN,9812345679,HRX0023458
+Neha Sharma,Female,,Vikas Sharma,,H.no 2 Ward 1,General,GEN,9812345679,HRX0023459
+Suresh Yadav,Male,Hari Ram,,,H.no 3 Ward 2,Other Backward Classes,BC-B,9834567890,HRX0034567
+Meena Devi,Female,,Suresh Yadav,,H.no 3 Ward 2,Other Backward Classes,BC-B,9834567890,HRX0034568
