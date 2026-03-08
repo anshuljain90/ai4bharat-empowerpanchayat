@@ -143,9 +143,16 @@ const PanchayatForm = ({
     const { name, value } = e.target;
 
     // For numeric fields, sanitize input
-    if (name === "population" || name === "sabhaCriteria") {
-      // Only allow numbers
+    if (name === "population") {
+      // Only allow integers
       if (value === "" || /^\d*$/.test(value)) {
+        setFormValues({ ...formValues, [name]: value });
+      }
+      return;
+    }
+    if (name === "sabhaCriteria") {
+      // Allow integers and decimals
+      if (value === "" || /^\d*\.?\d*$/.test(value)) {
         setFormValues({ ...formValues, [name]: value });
       }
       return;
@@ -236,8 +243,8 @@ const PanchayatForm = ({
     // Sabha Criteria validation (optional but must be a valid number)
     if (formValues.sabhaCriteria) {
       const criteria = Number(formValues.sabhaCriteria);
-      if (isNaN(criteria) || !Number.isInteger(criteria) || criteria < 0) {
-        errors.sabhaCriteria = "Sabha criteria must be a positive integer";
+      if (isNaN(criteria) || criteria < 0) {
+        errors.sabhaCriteria = "Sabha criteria must be a positive number";
       } else if (criteria > 10000) {
         // 10,000 cap
         errors.sabhaCriteria = "Sabha criteria value is too large";
@@ -596,8 +603,8 @@ const PanchayatForm = ({
                   helperText={formErrors.sabhaCriteria}
                   type="text"
                   InputProps={{
-                    inputMode: "numeric",
-                    pattern: "[0-9]*",
+                    inputMode: "decimal",
+                    pattern: "[0-9]*\\.?[0-9]*",
                   }}
                 />
               </Grid>
