@@ -262,7 +262,7 @@ async def process_jio_transcription_async(request_id: str, tracker: RequestTrack
             provider_display = f"AWS Transcribe ({language})"
         elif provider == "whisper":
             logger.info(f"Processing transcription for request {request_id} with language: {language}, provider: Whisper")
-            transcribe_func = stt_transcriber.transcribe_audio
+            transcribe_func = lambda audio_path: stt_transcriber.transcribe_audio(audio_path, language)
             provider_name = "whisper"
             provider_display = f"HuggingFace Whisper ({language})"
         else:
