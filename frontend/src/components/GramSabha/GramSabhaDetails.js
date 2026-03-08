@@ -493,7 +493,7 @@ const GramSabhaDetails = ({ meetingId, user }) => {
       console.warn('Letterhead not available, continuing without:', e);
     }
 
-    const panchayat = attendance?.panchayatId || {};
+    const panchayat = attendance?.panchayatId || meeting.panchayatId || {};
     const agendaItemsHTML = Array.isArray(meeting.agenda)
       ? meeting.agenda.map((item, i) => {
           const title = getMultilingualText(item, 'title') || `${strings.agenda} ${i + 1}`;
