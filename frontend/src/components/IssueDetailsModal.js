@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
     Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography,
     Box, Grid, Chip, Stack, IconButton, CircularProgress, Paper, Alert
@@ -23,41 +23,63 @@ const IssueDetailsModal = ({ issue, tabValue, open, onClose }) => {
     const { strings } = useLanguage();
     const [transcriptionData, setTranscriptionData] = useState(null);
     const [transcriptionLoading, setTranscriptionLoading] = useState(false);
+    const pollTimerRef = useRef(null);
 
-    const fetchTranscriptionStatus = async (issueId) => {
+    // Cleanup polling on unmount or when modal closes
+    useEffect(() => {
+        return () => {
+            if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
+        };
+    }, []);
+
+    const stopPolling = useCallback(() => {
+        if (pollTimerRef.current) {
+            clearTimeout(pollTimerRef.current);
+            pollTimerRef.current = null;
+        }
+    }, []);
+
+    const fetchTranscriptionStatus = useCallback(async (issueId, poll = false) => {
         if (!issueId) return;
         setTranscriptionLoading(true);
         try {
             const response = await getTranscriptionStatus(issueId);
             if (response.success) {
                 setTranscriptionData(response.transcription);
+                // If still processing and polling requested, poll again in 3 seconds
+                if (poll && response.transcription?.status === 'PROCESSING') {
+                    pollTimerRef.current = setTimeout(() => fetchTranscriptionStatus(issueId, true), 3000);
+                    return; // Keep loading state active
+                }
             }
         } catch (error) {
             console.error(`Error fetching transcription status:`, error);
-        } finally {
-            setTranscriptionLoading(false);
         }
-    };
+        setTranscriptionLoading(false);
+    }, []);
 
     useEffect(() => {
+        stopPolling();
         if (issue && issue._id) {
-            // Reset state when issue changes
             setTranscriptionData(null);
             if (issue.transcription && issue.transcription.requestId) {
-                fetchTranscriptionStatus(issue._id);
+                // Poll if already processing, otherwise just fetch once
+                const shouldPoll = issue.transcription.status === 'PROCESSING';
+                fetchTranscriptionStatus(issue._id, shouldPoll);
             }
         }
-    }, [issue]);
+    }, [issue, fetchTranscriptionStatus, stopPolling]);
 
     const handleRetryTranscription = async () => {
         if (!issue) return;
+        stopPolling();
         setTranscriptionLoading(true);
         try {
             await retryTranscription(issue._id);
-            await fetchTranscriptionStatus(issue._id); // Refresh status
+            // Start polling until transcription completes
+            fetchTranscriptionStatus(issue._id, true);
         } catch (error) {
             console.error(`Error retrying transcription:`, error);
-        } finally {
             setTranscriptionLoading(false);
         }
     };
