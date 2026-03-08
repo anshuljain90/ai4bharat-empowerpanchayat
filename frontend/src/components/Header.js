@@ -31,9 +31,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import PeopleIcon from '@mui/icons-material/People';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import PersonIcon from '@mui/icons-material/Person';
 import MenuIcon from '@mui/icons-material/Menu';
-import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import LockIcon from '@mui/icons-material/Lock';
 import LogoutIcon from '@mui/icons-material/Logout';
 import PanchayatSelector from './PanchayatSelector';
@@ -49,7 +47,6 @@ const Header = ({
   selectedPanchayat,
   onPanchayatChange,
   isAdminPortal = false,
-  onSwitchPortal
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -75,20 +72,6 @@ const Header = ({
 
   // Show panchayat selector in admin portal view, except in panchayats view
   const showPanchayatSelector = isAdminPortal && activeView !== 4 && onPanchayatChange;
-
-  // Handle navigation to opposite portal
-  const handlePortalSwitch = () => {
-    if (onSwitchPortal) {
-      onSwitchPortal();
-    } else {
-      if (isAdminPortal) {
-        navigate('/');
-      } else {
-        navigate('/admin');
-      }
-    }
-    setDrawerOpen(false);
-  };
 
   // Handle password change
   const handlePasswordChange = async (currentPassword, newPassword) => {
@@ -189,24 +172,6 @@ const Header = ({
         {/* Desktop User Menu */}
         {!isMobile && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            {/* Portal Switch Button */}
-            <Button
-              color="inherit"
-              variant="outlined"
-              onClick={handlePortalSwitch}
-              sx={{
-                mr: 2,
-                borderColor: 'rgba(255,255,255,0.3)',
-                '&:hover': {
-                  borderColor: 'rgba(255,255,255,0.8)',
-                  backgroundColor: 'rgba(255,255,255,0.1)'
-                }
-              }}
-              startIcon={isAdminPortal ? <PersonIcon /> : <AdminPanelSettingsIcon />}
-            >
-              {isAdminPortal ? 'Citizen Portal' : 'Admin Portal'}
-            </Button>
-
             {/* Password Change Button */}
             <Button
               color="inherit"
@@ -380,13 +345,6 @@ const Header = ({
 
         {/* User Actions */}
         <List>
-          <ListItemButton onClick={handlePortalSwitch}>
-            <ListItemIcon>
-              {isAdminPortal ? <PersonIcon /> : <AdminPanelSettingsIcon />}
-            </ListItemIcon>
-            <ListItemText primary={isAdminPortal ? 'Citizen Portal' : 'Admin Portal'} />
-          </ListItemButton>
-
           <ListItemButton onClick={() => {
             setPasswordDialogOpen(true);
             setDrawerOpen(false);

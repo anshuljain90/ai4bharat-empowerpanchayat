@@ -17,7 +17,6 @@ import CitizenLoginView from "./CitizenLoginView"; // Our enhanced login view
 import CitizenDashboard from "./CitizenDashboard";
 import IssueCreationView from "./IssueCreationView";
 import IssueListView from "./IssueListView";
-import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
 import tokenManager from "../utils/tokenManager";
 import { getCitizenProfile } from "../api/profile";
 import HelpButton from "../components/HelpButton";
@@ -180,11 +179,6 @@ const CitizenPortalContent = () => {
     }, 2000);
   };
 
-  // Navigation to Admin Portal
-  const navigateToAdmin = () => {
-    navigate("/admin/login");
-  };
-
   // Render the appropriate view based on authentication and current path
   const renderView = () => {
     // Handle loading state
@@ -211,26 +205,7 @@ const CitizenPortalContent = () => {
     // If not authenticated, show login (preserves all your URL param functionality)
     if (!user) {
       return (
-        <>
-          {/* Add admin button to login screen */}
-          <Box sx={{ position: "absolute", top: 16, right: 16, zIndex: 10 }}>
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={navigateToAdmin}
-              startIcon={<AdminPanelSettingsIcon />}
-              sx={{
-                backgroundColor: "rgba(255,255,255,0.8)",
-                "&:hover": {
-                  backgroundColor: "rgba(255,255,255,0.9)",
-                },
-              }}
-            >
-              Admin Portal
-            </Button>
-          </Box>
-          <CitizenLoginView onLogin={handleLogin} />
-        </>
+        <CitizenLoginView onLogin={handleLogin} />
       );
     }
 
@@ -292,21 +267,6 @@ const CitizenPortalContent = () => {
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
               Gram Sabha Citizen Portal
             </Typography>
-            <Button
-              color="inherit"
-              variant="outlined"
-              onClick={navigateToAdmin}
-              startIcon={<AdminPanelSettingsIcon />}
-              sx={{
-                borderColor: "rgba(255,255,255,0.3)",
-                "&:hover": {
-                  borderColor: "rgba(255,255,255,0.8)",
-                  backgroundColor: "rgba(255,255,255,0.1)",
-                },
-              }}
-            >
-              Admin Portal
-            </Button>
           </Toolbar>
         </AppBar>
       )}

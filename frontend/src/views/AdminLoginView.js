@@ -16,8 +16,6 @@ import {
     Link as MuiLink
 } from '@mui/material';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import GroupIcon from '@mui/icons-material/Group';
-import PersonIcon from '@mui/icons-material/Person';
 import { useAuth } from '../utils/authContext';
 import { Link } from 'react-router-dom';
 
@@ -114,43 +112,7 @@ const AdminLoginView = () => {
                         Gram Sabha Management
                     </Typography>
                 </Box>
-                <Box>
-                    <Button
-                        component={Link}
-                        to="/login/official"
-                        variant="outlined"
-                        color="inherit"
-                        size="small"
-                        startIcon={<GroupIcon />}
-                        sx={{
-                            mr: 1,
-                            borderColor: 'rgba(255,255,255,0.5)',
-                            '&:hover': {
-                                borderColor: 'white',
-                                backgroundColor: 'rgba(255,255,255,0.1)'
-                            }
-                        }}
-                    >
-                        Official Portal
-                    </Button>
-                    <Button
-                        component={Link}
-                        to="/"
-                        variant="outlined"
-                        color="inherit"
-                        size="small"
-                        startIcon={<PersonIcon />}
-                        sx={{
-                            borderColor: 'rgba(255,255,255,0.5)',
-                            '&:hover': {
-                                borderColor: 'white',
-                                backgroundColor: 'rgba(255,255,255,0.1)'
-                            }
-                        }}
-                    >
-                        Citizen Portal
-                    </Button>
-                </Box>
+                <Box />
             </Box>
 
             <Container maxWidth="lg" sx={{ flexGrow: 1, display: 'flex', py: 4 }}>

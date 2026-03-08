@@ -16,8 +16,6 @@ import {
     Link as MuiLink
 } from '@mui/material';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
-import PersonIcon from '@mui/icons-material/Person';
 import { useAuth } from '../utils/authContext';
 import { useLanguage } from '../utils/LanguageContext';
 import LanguageSwitcher from '../components/LanguageSwitcher';
@@ -120,44 +118,7 @@ const OfficialLoginView = () => {
                     </Typography>
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Button
-                        component={RouterLink}
-                        to="/admin/login"
-                        variant="outlined"
-                        color="inherit"
-                        size="small"
-                        startIcon={<AdminPanelSettingsIcon />}
-                        sx={{
-                            mr: 1,
-                            borderColor: 'rgba(255,255,255,0.5)',
-                            '&:hover': {
-                                borderColor: 'white',
-                                backgroundColor: 'rgba(255,255,255,0.1)'
-                            }
-                        }}
-                    >
-                        {strings.adminPortal || 'Admin Portal'}
-                    </Button>
-                    <Button
-                        component={RouterLink}
-                        to="/"
-                        variant="outlined"
-                        color="inherit"
-                        size="small"
-                        startIcon={<PersonIcon />}
-                        sx={{
-                            borderColor: 'rgba(255,255,255,0.5)',
-                            '&:hover': {
-                                borderColor: 'white',
-                                backgroundColor: 'rgba(255,255,255,0.1)'
-                            }
-                        }}
-                    >
-                        {strings.citizenPortal || 'Citizen Portal'}
-                    </Button>
-                    <Box sx={{ ml: 2 }}>
-                        <LanguageSwitcher />
-                    </Box>
+                    <LanguageSwitcher />
                 </Box>
             </Box>
 

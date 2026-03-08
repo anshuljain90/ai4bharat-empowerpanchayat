@@ -363,7 +363,6 @@ const AdminPortal = () => {
                 selectedPanchayat={selectedPanchayat}
                 onPanchayatChange={handlePanchayatChange}
                 isAdminPortal={true}
-                onSwitchPortal={() => navigate('/')}
             />
 
             <Container component="main" sx={{ flexGrow: 1, py: 4, maxWidth: 'lg' }}>
