@@ -35,20 +35,11 @@ const OfficialLoginView = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
 
-    // If user is already logged in, redirect to appropriate dashboard
+    // If user is already logged in as an official, redirect to dashboard
     useEffect(() => {
-        if (user) {
+        if (user && ['SECRETARY', 'PRESIDENT', 'WARD_MEMBER', 'COMMITTEE_SECRETARY'].includes(user.role)) {
             const from = location.state?.from?.pathname;
-            if (from) {
-                navigate(from, { replace: true });
-            } else {
-                // Navigate based on role
-                if (user.role === 'ADMIN') {
-                    navigate('/admin/dashboard', { replace: true });
-                } else {
-                    navigate('/official/dashboard', { replace: true });
-                }
-            }
+            navigate(from || '/official/dashboard', { replace: true });
         }
     }, [user, navigate, location]);
 
