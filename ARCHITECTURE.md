@@ -163,10 +163,12 @@ A voice-first, face-authenticated platform that digitizes the entire Gram Sabha 
 └──────────┘     └───────────────────────────────────────────────────┘
 
 Traffic Flows:
-  Browser → :443 → Nginx → /api/*     → Node.js :5000  (CRUD, auth, uploads)
-  Browser → :443 → Nginx → /mom-api/* → FastAPI :8000  (TTS read-aloud only)
-  Node.js → Docker net → FastAPI :8000                  (STT, MOM, agenda, sentiment)
-  API GW  → :8000 → FastAPI directly                   (rate-limited external access)
+  Browser → API Gateway → Nginx :443 → /api/*     → Node.js :5000  (CRUD, auth, uploads)
+  Browser → API Gateway → Nginx :443 → /mom-api/* → FastAPI :8000  (TTS, MOM, agenda)
+  Node.js → Docker internal network  → FastAPI :8000               (STT, sentiment, cron jobs)
+
+  All browser API calls include x-api-key header for API Gateway rate limiting.
+  JWT auth handles user authentication; API key handles throttling + quotas.
 
   * Transcribe: code-ready, needs subscription activation
   ** SNS SMS: code-ready, needs DLT registration
@@ -516,37 +518,57 @@ function getSecret(key) {
 
 | | |
 |---|---|
-| **WHY** | Rate limiting, API key management, and quota enforcement for expensive AI endpoints (MOM generation, TTS, STT) |
-| **WHAT** | REST API (REGIONAL) with HTTP_PROXY integration to EC2 FastAPI backend |
-| **HOW** | `{proxy+}` catches all paths, forwards to `http://{EC2_IP}:8000/` (FastAPI directly) |
+| **WHY** | Single managed entry point for ALL API traffic — rate limiting, API key management, quota enforcement, and usage tracking |
+| **WHAT** | REST API (REGIONAL) with HTTP_PROXY integration to EC2 Nginx, fronting both Node.js and FastAPI backends |
+| **HOW** | `{proxy+}` catches all paths, forwards to `https://{EC2_IP}/{proxy}` (Nginx handles routing to backends) |
 | **COST** | Hackathon: ~$0.01/mo (free tier: 1M calls/mo). National: $3.50/M calls + response caching |
 
 **Deployed Configuration (verified active):**
 ```
 API Name:    eGramSabha-MOM-API (REGIONAL endpoint)
 Stage:       prod
-Integration: HTTP_PROXY → EC2:8000 (FastAPI container)
+Integration: HTTP_PROXY → Nginx :443 (TLS with insecureSkipVerification for self-signed cert)
+Routing:     Nginx handles /api/* → Node.js and /mom-api/* → FastAPI
 
 Rate Limit:  100 requests/second
 Burst Limit: 200 requests
 Daily Quota:  100,000 requests/day (eGramSabha-Standard plan)
-API Key:     eGramSabha-Demo-Key (enabled, required for all endpoints)
-Security:    TLS 1.0+ (AWS managed)
+API Key:     eGramSabha-Demo-Key (enabled, sent via x-api-key header from frontend)
+Security:    AWS-managed TLS on gateway, self-signed TLS on EC2 Nginx
 ```
 
-**Why API Gateway for AI Endpoints:**
-- MOM generation costs ~$0.02-0.05 per call (Bedrock tokens) — throttling prevents cost runaway
-- TTS synthesis costs per character — quota prevents abuse
-- API key authentication gates external integrations (mobile apps, third-party systems)
-- Usage plan enables per-consumer tracking and billing at scale
+**Why API Gateway for ALL Traffic (not just AI endpoints):**
+- **Unified entry point:** Single URL for all API calls — simplifies frontend configuration
+- **Rate limiting:** Protects both CRUD and AI endpoints from abuse (100 req/s, 100K/day)
+- **API key tracking:** Usage per consumer for billing and analytics at scale
+- **Cost protection:** MOM generation (~$0.02-0.05/call) and TTS are expensive — quota prevents runaway costs
+- **Production path:** API Gateway scales automatically, no Nginx scaling needed for API traffic
+- **Security layer:** API key + Nginx rate limiting + JWT auth = defense in depth
+
+**Frontend Integration:**
+```javascript
+// frontend/src/index.js — Global fetch interceptor injects x-api-key
+const originalFetch = window.fetch;
+window.fetch = function (url, options = {}) {
+  if (url.startsWith(process.env.REACT_APP_BACKEND_URL)) {
+    options.headers = { ...options.headers, "x-api-key": API_KEY };
+  }
+  return originalFetch.call(this, url, options);
+};
+
+// frontend/src/utils/axiosConfig.js — Axios instance includes x-api-key
+const axiosInstance = axios.create({
+  baseURL: API_URL,
+  headers: { 'x-api-key': process.env.REACT_APP_API_GATEWAY_KEY },
+});
+```
 
 **Implementation:** `infra/setup-api-gateway.js` — Automated setup script that creates:
 1. REST API (`eGramSabha-MOM-API`) with REGIONAL endpoint
-2. `{proxy+}` resource with ANY method
-3. HTTP_PROXY integration to EC2 FastAPI on port 8000
-4. Usage plan (`eGramSabha-Standard`) with throttling + daily quota
-5. API key (`eGramSabha-Demo-Key`)
-6. `prod` stage deployment
+2. `{proxy+}` resource with ANY method → HTTP_PROXY to Nginx
+3. Usage plan (`eGramSabha-Standard`) with throttling + daily quota
+4. API key (`eGramSabha-Demo-Key`)
+5. `prod` stage deployment with TLS pass-through to self-signed Nginx
 
 ---
 
@@ -912,12 +934,12 @@ backend/middleware/auth.js
 ### API Security Layers
 
 ```
-Browser → Nginx (TLS + Rate Limiting) → Node.js (JWT Auth + Role Check)
-                                       → FastAPI (TTS only via /mom-api/)
+Browser → API Gateway (API Key + Throttling + Quota)
+       → Nginx (TLS + Rate Limiting + Security Headers)
+       → Node.js (JWT Auth + Role Check)           [/api/*]
+       → FastAPI (AI endpoints)                     [/mom-api/*]
 
-Node.js → Docker internal network → FastAPI (STT, MOM, agenda, sentiment)
-
-External → API Gateway (API Key + Throttling + Quota) → FastAPI :8000
+Node.js → Docker internal network → FastAPI         [STT, MOM, sentiment]
 ```
 
 | Layer | Protection |
@@ -1162,10 +1184,11 @@ This walkthrough demonstrates every integrated AWS service in a single user jour
 
 #### Step 10: Verify via API Gateway
 **Services: API Gateway, IAM**
-1. External system calls AI endpoints via **API Gateway**
-2. API key validated, rate limit checked (100 req/s)
-3. Request proxied to EC2 → AI backend
-4. Response returned with usage tracked in **CloudWatch**
+1. All browser API calls route through **API Gateway** (visible in browser Network tab: `x-api-key` header)
+2. API key validated, rate limit checked (100 req/s, 100K/day quota)
+3. Request proxied to EC2 Nginx → appropriate backend (Node.js or FastAPI)
+4. Response returned with usage tracked in API Gateway metrics
+5. External systems can use the same gateway URL with their own API keys
 
 ### AWS Services Verification Checklist
 
@@ -1219,4 +1242,4 @@ This walkthrough demonstrates every integrated AWS service in a single user jour
 
 *Document generated for AI for Bharat Hackathon submission — eGramSabha Platform*
 *Architecture reflects deployed codebase as of March 2026*
-*11 AWS services active, 4 code-ready (Transcribe, SNS SMS delivery, Rekognition, DocumentDB)*
+*11 AWS services active (including API Gateway fronting all traffic), 4 code-ready (Transcribe, SNS SMS delivery, Rekognition, DocumentDB)*
