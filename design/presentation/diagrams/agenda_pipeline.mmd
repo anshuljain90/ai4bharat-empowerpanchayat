@@ -1,0 +1,21 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '14px' }}}%%
+graph LR
+    A["📋 <b>Citizen Issues</b><br/>All Submitted<br/>Issues"]
+    B["<b>Bedrock LLM</b><br/>Structured Agenda<br/>Generation"]
+    C["<b>AWS Translate</b><br/>Multi-language<br/>Agenda"]
+    D["<b>Amazon Polly</b><br/>TTS Read-Aloud<br/>(Aditi / Raveena)"]
+    E["<b>S3 Cache</b><br/>Audio Files<br/>Cached"]
+    F["📢 <b>SNS Notify</b><br/>SMS to<br/>Citizens"]
+
+    A -->|Issues JSON| B
+    B -->|Agenda| C
+    C -->|Translated| D
+    D -->|Audio| E
+    E -->|Ready| F
+
+    style A fill:#2E7D32,stroke:#1B5E20,color:#fff
+    style B fill:#7B1FA2,stroke:#6A1B9A,color:#fff
+    style C fill:#1565C0,stroke:#0D47A1,color:#fff
+    style D fill:#FB8C00,stroke:#EF6C00,color:#fff
+    style E fill:#00838F,stroke:#006064,color:#fff
+    style F fill:#D32F2F,stroke:#B71C1C,color:#fff

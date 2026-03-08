@@ -1,0 +1,21 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '14px' }}}%%
+graph LR
+    A["🎙️ <b>Meeting Audio</b><br/>Gram Sabha<br/>Recording"]
+    B["<b>STT Engine</b><br/>Transcription<br/>(Provider Agnostic)"]
+    C["<b>Chunking</b><br/>1500 chars<br/>200 overlap"]
+    D["<b>Bedrock LLM</b><br/>Structured MOM<br/>(temp 0.3)"]
+    E["<b>AWS Translate</b><br/>English + Hindi<br/>+ Regional"]
+    F["📄 <b>PDF Export</b><br/>Letterhead<br/>3 Languages"]
+
+    A -->|Audio File| B
+    B -->|Full Text| C
+    C -->|Chunks| D
+    D -->|Structured JSON| E
+    E -->|Multilingual| F
+
+    style A fill:#2E7D32,stroke:#1B5E20,color:#fff
+    style B fill:#1565C0,stroke:#0D47A1,color:#fff
+    style C fill:#FB8C00,stroke:#EF6C00,color:#fff
+    style D fill:#7B1FA2,stroke:#6A1B9A,color:#fff
+    style E fill:#1565C0,stroke:#0D47A1,color:#fff
+    style F fill:#2E7D32,stroke:#1B5E20,color:#fff
