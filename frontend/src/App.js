@@ -22,7 +22,12 @@ import ResetPasswordView from "./views/ResetPasswordView";
 
 // Enhanced Protected Route component that handles user types
 const ProtectedRoute = ({ children, requiredRoles = [] }) => {
-  const { user, hasRole, getUserType } = useAuth();
+  const { user, loading, hasRole, getUserType } = useAuth();
+
+  // Show nothing while auth is being verified
+  if (loading) {
+    return null;
+  }
 
   if (!user) {
     // Determine the appropriate login path based on the required roles
@@ -52,19 +57,27 @@ const ProtectedRoute = ({ children, requiredRoles = [] }) => {
 
   // If roles are specified, check if user has required role
   if (requiredRoles.length > 0 && !hasRole(requiredRoles)) {
-    // Redirect users to their appropriate dashboard based on their type
-    const userType = getUserType();
+    // User is logged in but with wrong role — show the login page for THIS portal
+    // (not redirect to their own dashboard)
+    let loginPath = "/admin/login";
 
-    if (userType === "ADMIN") {
-      return <Navigate to="/admin/dashboard" replace />;
-    } else if (userType === "OFFICIAL") {
-      return <Navigate to="/official/dashboard" replace />;
-    } else if (userType === "CITIZEN") {
-      return <Navigate to="/citizen/dashboard" replace />;
+    if (
+      requiredRoles.some((role) =>
+        [
+          "SECRETARY",
+          "PRESIDENT",
+          "WARD_MEMBER",
+          "COMMITTEE_SECRETARY",
+          "GUEST",
+        ].includes(role)
+      )
+    ) {
+      loginPath = "/official/login";
+    } else if (requiredRoles.includes("CITIZEN")) {
+      loginPath = "/";
     }
 
-    // Fallback unauthorized page
-    return <Navigate to="/unauthorized" replace />;
+    return <Navigate to={loginPath} replace />;
   }
 
   return children;

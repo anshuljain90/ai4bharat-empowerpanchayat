@@ -67,38 +67,23 @@ const CitizenPortalContent = () => {
               setCurrentView(VIEWS.DASHBOARD);
               // Comment out navigation for now
               // navigate("/citizen/dashboard", { replace: true });
-            } else {
-              // If profile fetch fails, try stored user
-              const storedUser = localStorage.getItem("citizenUser");
-              if (storedUser && isMounted) {
-                setUser(JSON.parse(storedUser));
-                setCurrentView(VIEWS.DASHBOARD);
-              } else if (isMounted) {
-                tokenManager.clearTokens();
-                setCurrentView(VIEWS.LOGIN);
-              }
+            } else if (isMounted) {
+              // Profile fetch returned invalid data — show login
+              localStorage.removeItem("citizenUser");
+              setCurrentView(VIEWS.LOGIN);
             }
           } catch (error) {
             console.error("Error fetching profile:", error);
             if (!isMounted) return;
-            
-            // Try stored user as fallback
-            const storedUser = localStorage.getItem("citizenUser");
-            if (storedUser) {
-              setUser(JSON.parse(storedUser));
-              setCurrentView(VIEWS.DASHBOARD);
-            } else {
-              tokenManager.clearTokens();
-              setCurrentView(VIEWS.LOGIN);
-            }
+
+            // Token is not a valid citizen token — show login
+            localStorage.removeItem("citizenUser");
+            setCurrentView(VIEWS.LOGIN);
           }
         } else {
-          // No tokens - check for stored user
-          const storedUser = localStorage.getItem("citizenUser");
-          if (storedUser && isMounted) {
-            setUser(JSON.parse(storedUser));
-            setCurrentView(VIEWS.DASHBOARD);
-          } else if (isMounted) {
+          // No tokens — show login
+          if (isMounted) {
+            localStorage.removeItem("citizenUser");
             setCurrentView(VIEWS.LOGIN);
           }
         }
