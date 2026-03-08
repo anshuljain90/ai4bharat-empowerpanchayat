@@ -1,0 +1,41 @@
+Name,Gender,Father Name,Husband Name,Mother Name,Address,Caste Category,Caste,Mobile number,Voter id number
+Rajesh Kumar,Male,Shiv Prasad,,,H.no 1 Ward 1,Other Backward Classes,BC-A,9876543210,HRX0012345
+Sunita Devi,Female,,Rajesh Kumar,,H.no 1 Ward 1,Other Backward Classes,BC-A,9876543210,HRX0012346
+Amit Kumar,Male,Rajesh Kumar,,,H.no 1 Ward 1,Other Backward Classes,BC-A,9876543211,HRX0012347
+Pooja Rani,Female,Rajesh Kumar,,,H.no 1 Ward 1,Other Backward Classes,BC-A,9876543211,HRX0012348
+Ramesh Chand,Male,Babu Lal,,,H.no 2 Ward 1,General,GEN,9812345678,HRX0023456
+Kamla Devi,Female,,Ramesh Chand,,H.no 2 Ward 1,General,GEN,9812345678,HRX0023457
+Vikas Sharma,Male,Ramesh Chand,,,H.no 2 Ward 1,General,GEN,9812345679,HRX0023458
+Neha Sharma,Female,,Vikas Sharma,,H.no 2 Ward 1,General,GEN,9812345679,HRX0023459
+Suresh Yadav,Male,Hari Ram,,,H.no 3 Ward 2,Other Backward Classes,BC-B,9834567890,HRX0034567
+Meena Devi,Female,,Suresh Yadav,,H.no 3 Ward 2,Other Backward Classes,BC-B,9834567890,HRX0034568
+Deepak Yadav,Male,Suresh Yadav,,,H.no 3 Ward 2,Other Backward Classes,BC-B,9834567891,HRX0034569
+Priyanka,Female,Suresh Yadav,,,H.no 3 Ward 2,Other Backward Classes,BC-B,9834567891,HRX0034570
+Mukesh Singh,Male,Dharamveer,,,H.no 4 Ward 2,General,GEN,9856789012,HRX0045678
+Savitri Devi,Female,,Mukesh Singh,,H.no 4 Ward 2,General,GEN,9856789012,HRX0045679
+Rahul Singh,Male,Mukesh Singh,,,H.no 4 Ward 2,General,GEN,9856789013,HRX0045680
+Kavita Singh,Female,,Rahul Singh,,H.no 4 Ward 2,General,GEN,9856789013,HRX0045681
+Balwan Singh,Male,Jaipal,,,H.no 5 Ward 3,Scheduled Caste,SC,9878901234,HRX0056789
+Santosh Devi,Female,,Balwan Singh,,H.no 5 Ward 3,Scheduled Caste,SC,9878901234,HRX0056790
+Anil Kumar,Male,Balwan Singh,,,H.no 5 Ward 3,Scheduled Caste,SC,9878901235,HRX0056791
+Rekha Devi,Female,,Anil Kumar,,H.no 5 Ward 3,Scheduled Caste,SC,9878901235,HRX0056792
+Jagdish Prasad,Male,Nathu Ram,,,H.no 6 Ward 3,Other Backward Classes,BC-A,9890123456,HRX0067890
+Parvati Devi,Female,,Jagdish Prasad,,H.no 6 Ward 3,Other Backward Classes,BC-A,9890123456,HRX0067891
+Sanjay Kumar,Male,Jagdish Prasad,,,H.no 6 Ward 3,Other Backward Classes,BC-A,9890123457,HRX0067892
+Anita Kumari,Female,,Sanjay Kumar,,H.no 6 Ward 3,Other Backward Classes,BC-A,9890123457,HRX0067893
+Mahender Singh,Male,Rattan Lal,,,H.no 7 Ward 4,General,GEN,9801234567,HRX0078901
+Kiran Devi,Female,,Mahender Singh,,H.no 7 Ward 4,General,GEN,9801234567,HRX0078902
+Rohit Kumar,Male,Mahender Singh,,,H.no 7 Ward 4,General,GEN,9801234568,HRX0078903
+Sapna Rani,Female,Mahender Singh,,,H.no 7 Ward 4,General,GEN,9801234568,HRX0078904
+Dharampal,Male,Kishan Lal,,,H.no 8 Ward 4,Scheduled Caste,SC,9823456789,HRX0089012
+Pushpa Devi,Female,,Dharampal,,H.no 8 Ward 4,Scheduled Caste,SC,9823456789,HRX0089013
+Naveen Kumar,Male,Dharampal,,,H.no 8 Ward 4,Scheduled Caste,SC,9823456790,HRX0089014
+Ritu Devi,Female,,Naveen Kumar,,H.no 8 Ward 4,Scheduled Caste,SC,9823456790,HRX0089015
+Satish Chandra,Male,Bhagwan Das,,,H.no 9 Ward 5,Other Backward Classes,BC-A,9845678901,HRX0090123
+Usha Rani,Female,,Satish Chandra,,H.no 9 Ward 5,Other Backward Classes,BC-A,9845678901,HRX0090124
+Pawan Kumar,Male,Satish Chandra,,,H.no 9 Ward 5,Other Backward Classes,BC-A,9845678902,HRX0090125
+Geeta Devi,Female,,Pawan Kumar,,H.no 9 Ward 5,Other Backward Classes,BC-A,9845678902,HRX0090126
+Vinod Kumar,Male,Mool Chand,,,H.no 10 Ward 5,General,GEN,9867890123,HRX0101234
+Lata Devi,Female,,Vinod Kumar,,H.no 10 Ward 5,General,GEN,9867890123,HRX0101235
+Manish Kumar,Male,Vinod Kumar,,,H.no 10 Ward 5,General,GEN,9867890124,HRX0101236
+Aarti Devi,Female,,Manish Kumar,,H.no 10 Ward 5,General,GEN,9867890124,HRX0101237
