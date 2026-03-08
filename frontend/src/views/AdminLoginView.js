@@ -106,122 +106,128 @@ const AdminLoginView = () => {
                 <Box />
             </Box>
 
-            <Container maxWidth="lg" sx={{ flexGrow: 1, display: 'flex', py: 4 }}>
-                <Grid container spacing={4} alignItems="center" justifyContent="center">
-                    {/* Left Side - Description */}
-                    {!isMobile && (
-                        <Grid item xs={12} md={6}>
-                            <Paper
-                                elevation={2}
-                                sx={{
-                                    p: 4,
-                                    height: '100%',
-                                    bgcolor: 'primary.dark',
-                                    color: 'white'
-                                }}
-                            >
-                                <Typography variant="h4" component="h1" gutterBottom>
-                                    System Administration
-                                </Typography>
-                                <Typography variant="body1" paragraph>
-                                    This secure portal is designed for system administrators to manage the entire Gram Sabha Management platform.
-                                </Typography>
-                                <Typography variant="body1" paragraph>
-                                    Use your admin credentials to access system-wide configurations and management tools.
-                                </Typography>
-                                <Box sx={{ mt: 4 }}>
-                                    <Typography variant="subtitle1" gutterBottom fontWeight="bold">
-                                        Admin Features:
-                                    </Typography>
-                                    <ul>
-                                        <li>Manage panchayats and officials</li>
-                                        <li>System-wide configurations and settings</li>
-                                        <li>User management and security controls</li>
-                                        <li>Advanced analytics and reporting</li>
-                                    </ul>
-                                </Box>
-                            </Paper>
-                        </Grid>
-                    )}
-
-                    {/* Right Side - Login Form */}
-                    <Grid item xs={12} md={6}>
-                        <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
-                            <Box sx={{ textAlign: 'center', mb: 3 }}>
-                                <Typography variant="h5" component="h2" gutterBottom>
-                                    Administrator Login
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    Login with your admin credentials
-                                </Typography>
-                            </Box>
-
-                            {(error || authError) && (
-                                <Alert severity="error" sx={{ mb: 3 }}>
-                                    {error || authError}
-                                </Alert>
-                            )}
-
-                            <Box component="form" onSubmit={handleSubmit} noValidate>
-                                <TextField
-                                    margin="normal"
-                                    required
-                                    fullWidth
-                                    id="username"
-                                    label="Username"
-                                    name="username"
-                                    autoComplete="username"
-                                    autoFocus
-                                    value={formData.username}
-                                    onChange={handleChange}
-                                    disabled={loading}
-                                />
-                                <TextField
-                                    margin="normal"
-                                    required
-                                    fullWidth
-                                    name="password"
-                                    label="Password"
-                                    type="password"
-                                    id="password"
-                                    autoComplete="current-password"
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                    disabled={loading}
-                                />
-
-                                <Button
-                                    type="submit"
-                                    fullWidth
-                                    variant="contained"
-                                    color="primary"
-                                    sx={{ mt: 3, mb: 2, bgcolor: 'primary.dark' }}
-                                    disabled={loading}
+            <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', py: 4 }}>
+                <Container maxWidth="lg">
+                    <Grid container spacing={0} sx={{ minHeight: isMobile ? 'auto' : 420, borderRadius: 2, overflow: 'hidden', boxShadow: 3 }}>
+                        {/* Left Side - Description */}
+                        {!isMobile && (
+                            <Grid item md={5}>
+                                <Box
+                                    sx={{
+                                        p: 5,
+                                        height: '100%',
+                                        bgcolor: 'primary.dark',
+                                        color: 'white',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        justifyContent: 'center',
+                                    }}
                                 >
-                                    {loading ? (
-                                        <CircularProgress size={24} color="inherit" />
-                                    ) : (
-                                        'Sign In'
-                                    )}
-                                </Button>
+                                    <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
+                                        System Administration
+                                    </Typography>
+                                    <Typography variant="body1" paragraph sx={{ opacity: 0.9 }}>
+                                        This secure portal is designed for system administrators to manage the entire Gram Sabha Management platform.
+                                    </Typography>
+                                    <Typography variant="body1" paragraph sx={{ opacity: 0.9 }}>
+                                        Use your admin credentials to access system-wide configurations and management tools.
+                                    </Typography>
+                                    <Box sx={{ mt: 3 }}>
+                                        <Typography variant="subtitle1" gutterBottom fontWeight="bold">
+                                            Admin Features:
+                                        </Typography>
+                                        <Box component="ul" sx={{ pl: 2, '& li': { mb: 0.5, opacity: 0.9 } }}>
+                                            <li>Manage panchayats and officials</li>
+                                            <li>System-wide configurations and settings</li>
+                                            <li>User management and security controls</li>
+                                            <li>Advanced analytics and reporting</li>
+                                        </Box>
+                                    </Box>
+                                </Box>
+                            </Grid>
+                        )}
 
-                                <Grid container justifyContent="center">
-                                    <Grid item>
-                                        <MuiLink
-                                            component={Link}
-                                            to="/forgot-password"
-                                            variant="body2"
-                                            underline="hover"
+                        {/* Right Side - Login Form */}
+                        <Grid item xs={12} md={7}>
+                            <Box sx={{ p: isMobile ? 3 : 5, bgcolor: 'white', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                <Box sx={{ maxWidth: 400, mx: 'auto', width: '100%' }}>
+                                    <Box sx={{ textAlign: 'center', mb: 3 }}>
+                                        <Typography variant="h5" component="h2" gutterBottom fontWeight="bold">
+                                            Administrator Login
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            Login with your admin credentials
+                                        </Typography>
+                                    </Box>
+
+                                    {(error || authError) && (
+                                        <Alert severity="error" sx={{ mb: 3 }}>
+                                            {error || authError}
+                                        </Alert>
+                                    )}
+
+                                    <Box component="form" onSubmit={handleSubmit} noValidate>
+                                        <TextField
+                                            margin="normal"
+                                            required
+                                            fullWidth
+                                            id="username"
+                                            label="Username"
+                                            name="username"
+                                            autoComplete="username"
+                                            autoFocus
+                                            value={formData.username}
+                                            onChange={handleChange}
+                                            disabled={loading}
+                                        />
+                                        <TextField
+                                            margin="normal"
+                                            required
+                                            fullWidth
+                                            name="password"
+                                            label="Password"
+                                            type="password"
+                                            id="password"
+                                            autoComplete="current-password"
+                                            value={formData.password}
+                                            onChange={handleChange}
+                                            disabled={loading}
+                                        />
+
+                                        <Button
+                                            type="submit"
+                                            fullWidth
+                                            variant="contained"
+                                            color="primary"
+                                            sx={{ mt: 3, mb: 2, bgcolor: 'primary.dark' }}
+                                            disabled={loading}
                                         >
-                                            Forgot password?
-                                        </MuiLink>
-                                    </Grid>
-                                </Grid>
+                                            {loading ? (
+                                                <CircularProgress size={24} color="inherit" />
+                                            ) : (
+                                                'Sign In'
+                                            )}
+                                        </Button>
+
+                                        <Grid container justifyContent="center">
+                                            <Grid item>
+                                                <MuiLink
+                                                    component={Link}
+                                                    to="/forgot-password"
+                                                    variant="body2"
+                                                    underline="hover"
+                                                >
+                                                    Forgot password?
+                                                </MuiLink>
+                                            </Grid>
+                                        </Grid>
+                                    </Box>
+                                </Box>
                             </Box>
-                        </Paper>
+                        </Grid>
                     </Grid>
-                </Grid>
-            </Container>
+                </Container>
+            </Box>
 
             {/* Footer */}
             <Box

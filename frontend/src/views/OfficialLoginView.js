@@ -113,121 +113,127 @@ const OfficialLoginView = () => {
                 </Box>
             </Box>
 
-            <Container maxWidth="lg" sx={{ flexGrow: 1, display: 'flex', py: 4 }}>
-                <Grid container spacing={4} alignItems="center" justifyContent="center">
-                    {/* Left Side - Description */}
-                    {!isMobile && (
-                        <Grid item xs={12} md={6}>
-                            <Paper
-                                elevation={2}
-                                sx={{
-                                    p: 4,
-                                    height: '100%',
-                                    bgcolor: 'primary.main',
-                                    color: 'white'
-                                }}
-                            >
-                                <Typography variant="h4" component="h1" gutterBottom>
-                                    {strings.officialPortal || 'Official Portal'}
-                                </Typography>
-                                <Typography variant="body1" paragraph>
-                                    {strings.officialPortalDesc || 'This secure portal is designed for Panchayat officials to manage day-to-day operations.'}
-                                </Typography>
-                                <Typography variant="body1" paragraph>
-                                    {strings.useOfficialCredentials || 'Use your official credentials to access the system and manage your panchayat activities.'}
-                                </Typography>
-                                <Box sx={{ mt: 4 }}>
-                                    <Typography variant="subtitle1" gutterBottom fontWeight="bold">
-                                        {strings.officialFeatures || 'Official Features:'}
-                                    </Typography>
-                                    <ul>
-                                        <li>{strings.managePanchayatDetails || 'Manage panchayat details and ward information'}</li>
-                                        <li>{strings.trackCitizenIssues || 'Track and respond to citizen issues'}</li>
-                                        <li>{strings.organizeGramSabha || 'Organize Gram Sabha meetings'}</li>
-                                        <li>{strings.generateReports || 'Generate reports and analytics'}</li>
-                                    </ul>
-                                </Box>
-                            </Paper>
-                        </Grid>
-                    )}
-
-                    {/* Right Side - Login Form */}
-                    <Grid item xs={12} md={6}>
-                        <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
-                            <Box sx={{ textAlign: 'center', mb: 3 }}>
-                                <Typography variant="h5" component="h2" gutterBottom>
-                                    {strings.officialLogin || 'Official Login'}
-                                </Typography>
-                                <Typography variant="body2" color="text.secondary">
-                                    {strings.loginWithCredentials || 'Login with your official credentials'}
-                                </Typography>
-                            </Box>
-
-                            {(error || authError) && (
-                                <Alert severity="error" sx={{ mb: 3 }}>
-                                    {error || authError}
-                                </Alert>
-                            )}
-
-                            <Box component="form" onSubmit={handleSubmit} noValidate>
-                                <TextField
-                                    margin="normal"
-                                    required
-                                    fullWidth
-                                    id="username"
-                                    label={strings.username || 'Username'}
-                                    name="username"
-                                    autoComplete="username"
-                                    autoFocus
-                                    value={formData.username}
-                                    onChange={handleChange}
-                                    disabled={loading}
-                                />
-                                <TextField
-                                    margin="normal"
-                                    required
-                                    fullWidth
-                                    name="password"
-                                    label={strings.password || 'Password'}
-                                    type="password"
-                                    id="password"
-                                    autoComplete="current-password"
-                                    value={formData.password}
-                                    onChange={handleChange}
-                                    disabled={loading}
-                                />
-
-                                <Button
-                                    type="submit"
-                                    fullWidth
-                                    variant="contained"
-                                    sx={{ mt: 3, mb: 2 }}
-                                    disabled={loading}
+            <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', py: 4 }}>
+                <Container maxWidth="lg">
+                    <Grid container spacing={0} sx={{ minHeight: isMobile ? 'auto' : 420, borderRadius: 2, overflow: 'hidden', boxShadow: 3 }}>
+                        {/* Left Side - Description */}
+                        {!isMobile && (
+                            <Grid item md={5}>
+                                <Box
+                                    sx={{
+                                        p: 5,
+                                        height: '100%',
+                                        bgcolor: 'primary.main',
+                                        color: 'white',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        justifyContent: 'center',
+                                    }}
                                 >
-                                    {loading ? (
-                                        <CircularProgress size={24} color="inherit" />
-                                    ) : (
-                                        strings.signIn || 'Sign In'
-                                    )}
-                                </Button>
+                                    <Typography variant="h4" component="h1" gutterBottom fontWeight="bold">
+                                        {strings.officialPortal || 'Official Portal'}
+                                    </Typography>
+                                    <Typography variant="body1" paragraph sx={{ opacity: 0.9 }}>
+                                        {strings.officialPortalDesc || 'This secure portal is designed for Panchayat officials to manage day-to-day operations.'}
+                                    </Typography>
+                                    <Typography variant="body1" paragraph sx={{ opacity: 0.9 }}>
+                                        {strings.useOfficialCredentials || 'Use your official credentials to access the system and manage your panchayat activities.'}
+                                    </Typography>
+                                    <Box sx={{ mt: 3 }}>
+                                        <Typography variant="subtitle1" gutterBottom fontWeight="bold">
+                                            {strings.officialFeatures || 'Official Features:'}
+                                        </Typography>
+                                        <Box component="ul" sx={{ pl: 2, '& li': { mb: 0.5, opacity: 0.9 } }}>
+                                            <li>{strings.managePanchayatDetails || 'Manage panchayat details and ward information'}</li>
+                                            <li>{strings.trackCitizenIssues || 'Track and respond to citizen issues'}</li>
+                                            <li>{strings.organizeGramSabha || 'Organize Gram Sabha meetings'}</li>
+                                            <li>{strings.generateReports || 'Generate reports and analytics'}</li>
+                                        </Box>
+                                    </Box>
+                                </Box>
+                            </Grid>
+                        )}
 
-                                <Grid container justifyContent="center">
-                                    <Grid item>
-                                        <MuiLink
-                                            component={RouterLink}
-                                            to="/official/forgot-password"
-                                            variant="body2"
-                                            underline="hover"
+                        {/* Right Side - Login Form */}
+                        <Grid item xs={12} md={7}>
+                            <Box sx={{ p: isMobile ? 3 : 5, bgcolor: 'white', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                <Box sx={{ maxWidth: 400, mx: 'auto', width: '100%' }}>
+                                    <Box sx={{ textAlign: 'center', mb: 3 }}>
+                                        <Typography variant="h5" component="h2" gutterBottom fontWeight="bold">
+                                            {strings.officialLogin || 'Official Login'}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            {strings.loginWithCredentials || 'Login with your official credentials'}
+                                        </Typography>
+                                    </Box>
+
+                                    {(error || authError) && (
+                                        <Alert severity="error" sx={{ mb: 3 }}>
+                                            {error || authError}
+                                        </Alert>
+                                    )}
+
+                                    <Box component="form" onSubmit={handleSubmit} noValidate>
+                                        <TextField
+                                            margin="normal"
+                                            required
+                                            fullWidth
+                                            id="username"
+                                            label={strings.username || 'Username'}
+                                            name="username"
+                                            autoComplete="username"
+                                            autoFocus
+                                            value={formData.username}
+                                            onChange={handleChange}
+                                            disabled={loading}
+                                        />
+                                        <TextField
+                                            margin="normal"
+                                            required
+                                            fullWidth
+                                            name="password"
+                                            label={strings.password || 'Password'}
+                                            type="password"
+                                            id="password"
+                                            autoComplete="current-password"
+                                            value={formData.password}
+                                            onChange={handleChange}
+                                            disabled={loading}
+                                        />
+
+                                        <Button
+                                            type="submit"
+                                            fullWidth
+                                            variant="contained"
+                                            sx={{ mt: 3, mb: 2 }}
+                                            disabled={loading}
                                         >
-                                            {strings.forgotPassword || 'Forgot password?'}
-                                        </MuiLink>
-                                    </Grid>
-                                </Grid>
+                                            {loading ? (
+                                                <CircularProgress size={24} color="inherit" />
+                                            ) : (
+                                                strings.signIn || 'Sign In'
+                                            )}
+                                        </Button>
+
+                                        <Grid container justifyContent="center">
+                                            <Grid item>
+                                                <MuiLink
+                                                    component={RouterLink}
+                                                    to="/official/forgot-password"
+                                                    variant="body2"
+                                                    underline="hover"
+                                                >
+                                                    {strings.forgotPassword || 'Forgot password?'}
+                                                </MuiLink>
+                                            </Grid>
+                                        </Grid>
+                                    </Box>
+                                </Box>
                             </Box>
-                        </Paper>
+                        </Grid>
                     </Grid>
-                </Grid>
-            </Container>
+                </Container>
+            </Box>
 
             {/* Footer */}
             <Box
