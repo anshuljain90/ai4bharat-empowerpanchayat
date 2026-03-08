@@ -23,11 +23,15 @@ const processQueue = (error, token = null) => {
     failedQueue = [];
 };
 
+// API Gateway key for rate-limited access
+const API_GATEWAY_KEY = process.env.REACT_APP_API_GATEWAY_KEY;
+
 // Create axios instance with default config
 const axiosInstance = axios.create({
     baseURL: API_URL,
     headers: {
         'Content-Type': 'application/json',
+        ...(API_GATEWAY_KEY ? { 'x-api-key': API_GATEWAY_KEY } : {}),
     },
     timeout: 15000 // 15 seconds timeout
 });
@@ -99,6 +103,8 @@ axiosInstance.interceptors.response.use(
                 // Use a standalone axios call to avoid interceptors
                 const response = await axios.post(`${API_URL}/auth/refresh-token`, {
                     refreshToken
+                }, {
+                    headers: API_GATEWAY_KEY ? { 'x-api-key': API_GATEWAY_KEY } : {},
                 });
 
                 // Check for proper response structure

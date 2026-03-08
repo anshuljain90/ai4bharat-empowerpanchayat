@@ -107,60 +107,69 @@ A voice-first, face-authenticated platform that digitizes the entire Gram Sabha 
 ### High-Level Architecture
 
 ```
-                                    ┌─────────────────────────────┐
-                                    │       AWS Cloud Services     │
-                                    │                             │
-                                    │  ┌─────────┐ ┌───────────┐ │
-                                    │  │ Bedrock  │ │Transcribe │ │
-                                    │  │(Nova Lite│ │  (STT)    │ │
-                                    │  └────┬────┘ └─────┬─────┘ │
-                                    │       │            │        │
-                                    │  ┌────┴────┐ ┌─────┴─────┐ │
-                                    │  │Translate │ │   Polly   │ │
-                                    │  │(AI text)│ │  (TTS)    │ │
-                                    │  └────┬────┘ └─────┬─────┘ │
-                                    │       │            │        │
-                                    │  ┌────┴────┐ ┌─────┴─────┐ │
-                                    │  │   S3    │ │    SNS    │ │
-                                    │  │(Storage)│ │   (SMS)   │ │
-                                    │  └────┬────┘ └─────┬─────┘ │
-                                    │       │            │        │
-                                    │  ┌────┴────────────┴─────┐ │
-                                    │  │ CloudWatch │ Secrets  │ │
-                                    │  │  (Logs)    │ Manager  │ │
-                                    │  └────────────┴──────────┘ │
-                                    │                             │
-                                    │  ┌─────────────────────┐   │
-                                    │  │    API Gateway       │   │
-                                    │  │ (Rate Limit + Keys)  │   │
-                                    │  └──────────┬──────────┘   │
-                                    └─────────────┼──────────────┘
-                                                  │
-┌──────────┐     ┌──────────────────────────────────────────────────────┐
-│          │     │              EC2 (t3.medium)                         │
-│ Browser  │────>│  ┌─────────────────────────────────────────────┐    │
-│ (React)  │ 443 │  │            Nginx (Reverse Proxy)            │    │
-│          │     │  │  :80 → :443 redirect  │  TLS termination    │    │
-│          │     │  └────────┬────────────────────────┬───────────┘    │
-│          │     │           │ /api/*                 │ /mom-api/*     │
-│          │     │  ┌────────▼────────┐     ┌────────▼────────────┐   │
-│          │     │  │  Node.js :5000  │     │  FastAPI :8000      │   │
-│          │     │  │  (Backend API)  │     │  (AI/MOM Backend)   │   │
-│          │     │  │                 │     │                     │   │
-│          │     │  │ • Auth/JWT      │     │ • STT (Transcribe)  │   │
-│          │     │  │ • CRUD APIs     │     │ • LLM (Bedrock)     │   │
-│          │     │  │ • File Upload   │     │ • TTS (Polly)       │   │
-│          │     │  │ • SNS Notify    │     │ • Translation       │   │
-│          │     │  │ • Cron Jobs     │     │ • Sentiment         │   │
-│          │     │  └────────┬────────┘     └────────┬────────────┘   │
-│          │     │           │                       │                 │
-│          │     │  ┌────────▼───────────────────────▼────────────┐   │
-│          │     │  │              MongoDB :27017                  │   │
-│          │     │  │       (DocumentDB-compatible schema)        │   │
-│          │     │  └─────────────────────────────────────────────┘   │
-│          │     │                                                     │
-│          │     │  Docker Compose (4 containers on bridge network)    │
-└──────────┘     └─────────────────────────────────────────────────────┘
+                          ┌──────────────────────────────────────────┐
+                          │            AWS Cloud Services             │
+                          │                                          │
+                          │  ┌──────────┐ ┌───────────┐ ┌────────┐ │
+                          │  │ Bedrock   │ │Transcribe*│ │  S3    │ │
+                          │  │(Nova Lite)│ │  (STT)    │ │(Store) │ │
+                          │  └──────────┘ └───────────┘ └────────┘ │
+                          │                                          │
+                          │  ┌──────────┐ ┌───────────┐ ┌────────┐ │
+                          │  │Translate  │ │  Polly    │ │ SNS**  │ │
+                          │  │(AI text)  │ │  (TTS)    │ │ (SMS)  │ │
+                          │  └──────────┘ └───────────┘ └────────┘ │
+                          │                                          │
+                          │  ┌──────────┐ ┌───────────┐ ┌────────┐ │
+                          │  │CloudWatch│ │ Secrets   │ │  IAM   │ │
+                          │  │ (Logs)   │ │ Manager   │ │(Access)│ │
+                          │  └──────────┘ └───────────┘ └────────┘ │
+                          │                                          │
+                          │  ┌────────────────────────────────────┐ │
+                          │  │         API Gateway (REST)          │ │
+                          │  │  eGramSabha-MOM-API │ prod stage   │ │
+                          │  │  100 req/s │ 200 burst │ API key   │ │
+                          │  └──────────────────┬─────────────────┘ │
+                          └─────────────────────┼───────────────────┘
+                                                │ HTTP_PROXY
+                                                │ /{proxy+} → :8000
+                                                │
+┌──────────┐     ┌──────────────────────────────┼───────────────────────┐
+│          │     │           EC2 (t3.medium)     │                       │
+│          │     │                               │                       │
+│ Browser  │────>│  ┌────────────────────────────┼──────────────────┐   │
+│ (React)  │ 443 │  │       Nginx (Reverse Proxy)│                  │   │
+│          │     │  │  :80 → :443 redirect  │  TLS termination      │   │
+│          │     │  └────────┬───────────────────┬──────────────────┘   │
+│          │     │           │ /api/*            │ /mom-api/*           │
+│          │     │  ┌────────▼────────┐ ┌───────▼──────────────────┐   │
+│          │     │  │  Node.js :5000  │ │    FastAPI :8000         │   │
+│          │     │  │  (Backend API)  │ │    (AI/MOM Backend)      │◄──┘
+│          │     │  │                 │ │                          │
+│          │     │  │ • Auth/JWT      │ │ • STT (Whisper/Transcribe)│
+│          │     │  │ • CRUD APIs     │ │ • LLM (Bedrock Nova Lite)│
+│          │     │  │ • File Upload   │ │ • TTS (Polly + S3 cache) │
+│          │     │  │ • S3 Storage    │ │ • Translation (Translate)│
+│          │     │  │ • SNS Notify    │ │ • Sentiment (Bedrock)    │
+│          │     │  │ • Cron Jobs     │ │                          │
+│          │     │  └────────┬────────┘ └───────┬──────────────────┘
+│          │     │           │                   │
+│          │     │  ┌────────▼───────────────────▼──────────────────┐
+│          │     │  │              MongoDB :27017                    │
+│          │     │  │       (DocumentDB-compatible schema)          │
+│          │     │  └──────────────────────────────────────────────┘
+│          │     │                                                    │
+│          │     │  Docker Compose (4 containers on bridge network)   │
+└──────────┘     └───────────────────────────────────────────────────┘
+
+Traffic Flows:
+  Browser → :443 → Nginx → /api/*     → Node.js :5000  (CRUD, auth, uploads)
+  Browser → :443 → Nginx → /mom-api/* → FastAPI :8000  (TTS read-aloud only)
+  Node.js → Docker net → FastAPI :8000                  (STT, MOM, agenda, sentiment)
+  API GW  → :8000 → FastAPI directly                   (rate-limited external access)
+
+  * Transcribe: code-ready, needs subscription activation
+  ** SNS SMS: code-ready, needs DLT registration
 ```
 
 ### Three-Tier Architecture
@@ -507,27 +516,37 @@ function getSecret(key) {
 
 | | |
 |---|---|
-| **WHY** | Rate limiting and API key management for expensive AI endpoints |
-| **WHAT** | REST API with HTTP_PROXY integration to EC2, usage plans, and throttling |
-| **HOW** | `{proxy+}` catches all paths, forwards to `http://{EC2}/mom-api/` |
-| **COST** | Hackathon: ~$0.01/mo (free tier: 1M calls/mo). National: $3.50/M calls + cache |
+| **WHY** | Rate limiting, API key management, and quota enforcement for expensive AI endpoints (MOM generation, TTS, STT) |
+| **WHAT** | REST API (REGIONAL) with HTTP_PROXY integration to EC2 FastAPI backend |
+| **HOW** | `{proxy+}` catches all paths, forwards to `http://{EC2_IP}:8000/` (FastAPI directly) |
+| **COST** | Hackathon: ~$0.01/mo (free tier: 1M calls/mo). National: $3.50/M calls + response caching |
 
-**Configuration:**
+**Deployed Configuration (verified active):**
 ```
+API Name:    eGramSabha-MOM-API (REGIONAL endpoint)
+Stage:       prod
+Integration: HTTP_PROXY → EC2:8000 (FastAPI container)
+
 Rate Limit:  100 requests/second
 Burst Limit: 200 requests
-Daily Quota:  100,000 requests (demo plan)
-API Key:     Required for all endpoints
-Stage:       prod (with CloudWatch logging + X-Ray tracing)
+Daily Quota:  100,000 requests/day (eGramSabha-Standard plan)
+API Key:     eGramSabha-Demo-Key (enabled, required for all endpoints)
+Security:    TLS 1.0+ (AWS managed)
 ```
 
+**Why API Gateway for AI Endpoints:**
+- MOM generation costs ~$0.02-0.05 per call (Bedrock tokens) — throttling prevents cost runaway
+- TTS synthesis costs per character — quota prevents abuse
+- API key authentication gates external integrations (mobile apps, third-party systems)
+- Usage plan enables per-consumer tracking and billing at scale
+
 **Implementation:** `infra/setup-api-gateway.js` — Automated setup script that creates:
-1. REST API (`eGramSabha-MOM-API`)
+1. REST API (`eGramSabha-MOM-API`) with REGIONAL endpoint
 2. `{proxy+}` resource with ANY method
-3. HTTP_PROXY integration to EC2 Nginx
-4. Usage plan (`eGramSabha-Standard`) with throttling
+3. HTTP_PROXY integration to EC2 FastAPI on port 8000
+4. Usage plan (`eGramSabha-Standard`) with throttling + daily quota
 5. API key (`eGramSabha-Demo-Key`)
-6. CloudWatch logging on the `prod` stage
+6. `prod` stage deployment
 
 ---
 
@@ -893,9 +912,12 @@ backend/middleware/auth.js
 ### API Security Layers
 
 ```
-Internet → Nginx (TLS + Rate Limiting) → Backend (JWT Auth + Role Check)
-                                          ↓
-API Gateway (API Key + Throttling) → AI Backend (Expensive endpoints)
+Browser → Nginx (TLS + Rate Limiting) → Node.js (JWT Auth + Role Check)
+                                       → FastAPI (TTS only via /mom-api/)
+
+Node.js → Docker internal network → FastAPI (STT, MOM, agenda, sentiment)
+
+External → API Gateway (API Key + Throttling + Quota) → FastAPI :8000
 ```
 
 | Layer | Protection |

@@ -1,15 +1,18 @@
 /**
  * API Gateway Setup Script for eGramSabha
  *
- * Creates a REST API in front of the video-mom-backend with:
- * - HTTP_PROXY integration to the EC2 instance
+ * Creates a REST API Gateway that fronts ALL backend traffic:
+ * - HTTP_PROXY integration to EC2 Nginx (which routes /api/* and /mom-api/*)
  * - Usage plan with throttling (100 req/sec, 200 burst)
  * - API key for the demo
- * - Response caching on GET /request/{request_id}/status
  * - CloudWatch access/execution logging
  *
+ * Architecture:
+ *   Browser → API Gateway → Nginx (EC2) → Node.js :5000 (/api/*)
+ *                                        → FastAPI :8000 (/mom-api/*)
+ *
  * Usage:
- *   node infra/setup-api-gateway.js --ec2-url http://<EC2_IP>
+ *   node infra/setup-api-gateway.js --ec2-url https://<EC2_IP>
  *
  * Prerequisites:
  *   npm install @aws-sdk/client-api-gateway
@@ -240,14 +243,14 @@ async function main() {
   const ec2UrlIdx = args.indexOf("--ec2-url");
   if (ec2UrlIdx === -1 || !args[ec2UrlIdx + 1]) {
     console.error(
-      "Usage: node infra/setup-api-gateway.js --ec2-url http://<EC2_IP>"
+      "Usage: node infra/setup-api-gateway.js --ec2-url https://<EC2_IP>"
     );
     console.error(
-      "  The EC2 URL should point to the nginx frontend (port 80) with /mom-api/ proxy configured"
+      "  The EC2 URL should point to Nginx (HTTPS). API Gateway will proxy all paths to Nginx."
     );
     process.exit(1);
   }
-  const ec2Url = args[ec2UrlIdx + 1].replace(/\/$/, "") + "/mom-api";
+  const ec2Url = args[ec2UrlIdx + 1].replace(/\/$/, "");
 
   console.log("=== eGramSabha API Gateway Setup ===");
   console.log(`Region: ${REGION}`);
