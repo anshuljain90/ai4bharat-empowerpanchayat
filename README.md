@@ -51,6 +51,38 @@
 
 ---
 
+## Live Prototype
+
+| Portal | URL | Login Details |
+|--------|-----|---------------|
+| **Citizen Portal** | [https://44.194.253.143/citizen/login](https://44.194.253.143/citizen/login) | Last 4 digits of Voter ID + Face scan (no password needed) |
+| **Official Portal** | [https://44.194.253.143/official/login](https://44.194.253.143/official/login) | Username: configured official username, Password: same as username |
+| **Admin Portal** | [https://44.194.253.143/admin/login](https://44.194.253.143/admin/login) | Username: `admin`, Password: `AdminPassword123` |
+
+### Portal Access Details
+
+**Admin Portal** — Full system administration
+- Login with username `admin` and password `AdminPassword123`
+- Manage panchayats, officials, and citizen records
+- Import members via CSV, assign roles
+- Sample CSV files for bulk citizen import are available in the [`demo/`](demo/) folder (`sample-10citizens.csv`, `sample-30citizens.csv`, `sample-citizens.csv`)
+
+**Official Portal** — Gram Sabha management
+- Login with the official's configured username (password is the same as the username)
+- Create/manage issues, schedule Gram Sabha meetings, take biometric attendance
+- Generate AI-powered agendas and issue summaries
+
+**Citizen Portal** — Voice-first citizen participation
+- Login using last 4 digits of Voter ID + face recognition (passwordless)
+- Citizens must be registered by an official first (face photo captured during registration)
+- Report issues via voice or text, view meeting history
+
+### Demo Video
+
+[Demo Video (Google Drive)](https://drive.google.com/drive/folders/1aLeLtSPIDUaoypi3TAu2tg4I-TpxVUNH)
+
+---
+
 ## Architecture
 
 The application follows a client-server architecture:

@@ -1,73 +1,56 @@
-%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#2E7D32', 'primaryTextColor': '#fff', 'primaryBorderColor': '#1B5E20', 'lineColor': '#546E7A', 'fontSize': '13px' }}}%%
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#2E7D32', 'primaryTextColor': '#fff', 'primaryBorderColor': '#1B5E20', 'lineColor': '#78909C', 'fontSize': '15px' }, 'flowchart': { 'nodeSpacing': 30, 'rankSpacing': 50, 'curve': 'basis' }}}%%
 graph LR
-    subgraph FRONTEND["🌐 Frontend"]
-        FE["<b>React 19 + MUI 7</b><br/>face-api.js<br/>MediaPipe FaceMesh<br/>JioMeet SDK"]
-    end
+    FE["<b>🌐 Frontend</b><br/>React 19 · MUI 7<br/>face-api.js · MediaPipe<br/>JioMeet · jsPDF"]
 
-    subgraph EDGE["☁️ AWS Edge"]
-        APIGW["<b>API Gateway</b><br/>100 req/s<br/>API Key Auth"]
-    end
+    APIGW["<b>☁️ API Gateway</b><br/>REST · 100 req/s<br/>API Key Auth"]
 
-    subgraph DOCKER["🐳 EC2 t3.medium — Docker Compose"]
-        NGINX["<b>Nginx</b><br/>TLS · Reverse Proxy"]
-        NODE["<b>Node.js / Express</b><br/>:5000<br/>Auth · CRUD · S3 · Cron"]
-        PYTHON["<b>Python / FastAPI</b><br/>:8000<br/>STT · LLM · TTS · NLP"]
-        MONGO["<b>MongoDB</b><br/>:27017<br/>14 Collections · GridFS"]
-        NGINX --> NODE
-        NGINX --> PYTHON
+    subgraph DOCKER["🐳 EC2 t3.medium — Docker Compose (4 Containers)"]
+        direction TB
+        NGINX["<b>Nginx</b><br/>TLS 1.2/1.3 · GZIP · Rate Limit"]
+        NODE["<b>Node.js / Express :5000</b><br/>JWT Auth · CRUD · S3 Upload · Cron Jobs"]
+        PYTHON["<b>Python / FastAPI :8000</b><br/>STT (3 providers) · Bedrock LLM · TTS · NLP"]
+        MONGO["<b>MongoDB :27017</b><br/>14 Collections · GridFS · 3 Docker Volumes"]
+        NGINX -->|"/api/*"| NODE
+        NGINX -->|"/mom-api/*"| PYTHON
         NODE --> MONGO
         PYTHON --> MONGO
     end
 
-    subgraph AWS_ACTIVE["✅ AWS Services — Active (11)"]
+    subgraph AWS["✅ 11 Active AWS Services"]
         direction TB
-        BEDROCK["<b>Bedrock</b><br/>Nova Lite / Claude Sonnet"]
-        TRANSLATE["<b>Translate</b><br/>10+ Languages"]
-        POLLY["<b>Polly</b><br/>TTS · S3 Cache"]
-        S3["<b>S3</b> (×2)<br/>Intelligent-Tiering"]
-        CW["<b>CloudWatch</b>"]
-        SM["<b>Secrets Mgr</b>"]
-        IAM["<b>IAM</b>"]
+        BEDROCK["<b>Bedrock</b> Nova Lite"]
+        TRANSLATE["<b>Translate</b> 10+ Lang"]
+        POLLY["<b>Polly</b> TTS + S3 Cache"]
+        S3["<b>S3</b> ×2 Intelligent-Tiering"]
+        CW["<b>CloudWatch</b> 2 Log Groups"]
+        SM["<b>Secrets Manager</b> 4 JWT Keys"]
+        IAM["<b>IAM</b> Least-Privilege"]
     end
 
-    subgraph AWS_READY["⏳ Code-Ready (4)"]
-        direction TB
-        REK["Rekognition"]
-        DOCDB["DocumentDB"]
-        TRANS["Transcribe"]
-        SNS["SNS"]
-    end
+    READY["<b>⏳ Code-Ready (4)</b><br/>Rekognition · DocumentDB<br/>Transcribe · SNS"]
 
-    FE -->|HTTPS| APIGW
-    APIGW --> NGINX
+    FE -->|HTTPS| APIGW --> NGINX
     PYTHON --> BEDROCK
     PYTHON --> TRANSLATE
     PYTHON --> POLLY
     NODE --> S3
-    POLLY --> S3
+    POLLY -.-> S3
     NODE --> CW
-    PYTHON --> CW
     NODE --> SM
 
-    style FRONTEND fill:#1565C0,stroke:#0D47A1,color:#fff
-    style EDGE fill:#FF6F00,stroke:#E65100,color:#fff
+    style FE fill:#1565C0,stroke:#0D47A1,color:#fff
+    style APIGW fill:#FF6F00,stroke:#E65100,color:#fff
     style DOCKER fill:#37474F,stroke:#263238,color:#fff
-    style AWS_ACTIVE fill:#1B5E20,stroke:#1B5E20,color:#fff
-    style AWS_READY fill:#E65100,stroke:#E65100,color:#fff
-    style FE fill:#1976D2,stroke:#1565C0,color:#fff
-    style APIGW fill:#FB8C00,stroke:#EF6C00,color:#fff
-    style NGINX fill:#607D8B,stroke:#455A64,color:#fff
+    style AWS fill:#1B5E20,stroke:#1B5E20,color:#fff
+    style READY fill:#E65100,stroke:#BF360C,color:#fff
+    style NGINX fill:#78909C,stroke:#607D8B,color:#fff
     style NODE fill:#43A047,stroke:#2E7D32,color:#fff
     style PYTHON fill:#FB8C00,stroke:#EF6C00,color:#fff
     style MONGO fill:#7B1FA2,stroke:#6A1B9A,color:#fff
-    style BEDROCK fill:#2E7D32,stroke:#1B5E20,color:#fff
-    style TRANSLATE fill:#2E7D32,stroke:#1B5E20,color:#fff
-    style POLLY fill:#2E7D32,stroke:#1B5E20,color:#fff
+    style BEDROCK fill:#388E3C,stroke:#2E7D32,color:#fff
+    style TRANSLATE fill:#388E3C,stroke:#2E7D32,color:#fff
+    style POLLY fill:#388E3C,stroke:#2E7D32,color:#fff
     style S3 fill:#00838F,stroke:#006064,color:#fff
-    style CW fill:#00838F,stroke:#006064,color:#fff
-    style SM fill:#00838F,stroke:#006064,color:#fff
-    style IAM fill:#00838F,stroke:#006064,color:#fff
-    style REK fill:#FFA000,stroke:#FF8F00,color:#fff
-    style DOCDB fill:#FFA000,stroke:#FF8F00,color:#fff
-    style TRANS fill:#FFA000,stroke:#FF8F00,color:#fff
-    style SNS fill:#FFA000,stroke:#FF8F00,color:#fff
+    style CW fill:#00695C,stroke:#004D40,color:#fff
+    style SM fill:#00695C,stroke:#004D40,color:#fff
+    style IAM fill:#00695C,stroke:#004D40,color:#fff

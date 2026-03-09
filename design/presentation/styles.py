@@ -24,6 +24,12 @@ RED_URGENT = RGBColor(0xD3, 0x2F, 0x2F)      # Urgent/problem
 YELLOW_READY = RGBColor(0xFF, 0xA0, 0x00)    # Code-ready services
 TABLE_HEADER_BG = RGBColor(0x2E, 0x7D, 0x32) # Green header
 TABLE_ALT_BG = RGBColor(0xE8, 0xF5, 0xE9)   # Light green alt rows
+PLACEHOLDER_BG = RGBColor(0xE0, 0xE0, 0xE0)  # Screenshot placeholder
+PLACEHOLDER_BORDER = RGBColor(0xBD, 0xBD, 0xBD)
+
+# Extra slide constants
+HEADER_BAR_COLOR = GREEN_PRIMARY
+HEADER_BAR_HEIGHT = Inches(0.75)
 
 # Font
 FONT_TITLE = "Manrope"
