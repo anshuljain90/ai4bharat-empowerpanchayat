@@ -2,7 +2,7 @@
 
 > **"Sashakt Panchayat, Samriddh Bharat"** — Strong Panchayat, Prosperous India
 
-**eGramSabha** is an AI-driven, voice-first, face-authenticated platform that digitizes the entire Gram Sabha lifecycle — from citizen registration to issue resolution tracking. Built as a Digital Public Good (DPG), it serves 250,000+ Gram Panchayats through three role-based portals: Admin, Official, and Citizen.
+**eGramSabha** is an AI-driven, voice-first, face-authenticated platform that digitizes the entire Gram Sabha lifecycle — from citizen registration to issue resolution tracking. It serves 250,000+ Gram Panchayats through three role-based portals: Admin, Official, and Citizen.
 
 **Problem Statement:** PS03 - AI for Rural Innovation & Sustainable Systems
 **Team:** eGramSabha | **Team Leader:** Anshul Jain
@@ -271,7 +271,7 @@ We welcome contributions from everyone! Here's how you can help:
 
 ## Licensing
 
-eGramSabha is licensed under the **Apache License, Version 2.0**. Please review the [LICENSE](LICENSE) file for detailed terms.
+eGramSabha is open source. Please review the [LICENSE](LICENSE) file for detailed terms.
 
 ---
 

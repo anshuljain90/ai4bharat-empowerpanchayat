@@ -1134,6 +1134,6 @@ SLIDE30 = {
 SLIDE31 = {
     "vision": '"Sashakt Panchayat, Samriddh Bharat"',
     "subtitle": "Strong Panchayat, Prosperous India",
-    "license": "Apache 2.0  |  Digital Public Good  |  Open Source",
+    "license": "Open Source",
     "closing": "eGramSabha \u2014 AI-Powered Digital Gram Sabha Platform",
 }

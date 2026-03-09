@@ -55,7 +55,6 @@ PROJECT_ROOT = os.path.abspath(os.path.join(SCRIPT_DIR, "..", ".."))
 TEMPLATE_PATH = os.path.join(PROJECT_ROOT, "design",
                              "Prototype Development Submission _ AWS AI for Bharat Hackathon.pptx")
 OUTPUT_PATH = os.path.join(PROJECT_ROOT, "design", "eGramSabha_Hackathon_Submission.pptx")
-LOGO_PATH = os.path.join(SCRIPT_DIR, "assets", "logo.png")
 SCREENSHOTS_DIR = os.path.join(SCRIPT_DIR, "screenshots")
 DIAGRAMS_DIR = os.path.join(SCRIPT_DIR, "diagrams")
 TEMPLATE_BG_PATH = os.path.join(SCRIPT_DIR, "assets", "template_bg.png")
@@ -317,26 +316,22 @@ def build_our_title(prs):
     slide = add_extra_slide(prs, "")
     d = SLIDE_TITLE
 
-    # Logo centered (below template header area)
-    if os.path.exists(LOGO_PATH):
-        slide.shapes.add_picture(LOGO_PATH, Inches(4.0), Inches(0.6), Inches(1.5), Inches(1.5))
-
     # Project name
-    tf = add_textbox(slide, Inches(0.5), Inches(2.2), Inches(9.0), Inches(0.7))
+    tf = add_textbox(slide, Inches(0.5), Inches(0.8), Inches(9.0), Inches(0.7))
     tf.paragraphs[0].alignment = PP_ALIGN.CENTER
     run = tf.paragraphs[0].add_run()
     run.text = d["project_name"]
     set_font(run, Pt(36), True, GREEN_PRIMARY)
 
     # Tagline
-    tf2 = add_textbox(slide, Inches(0.5), Inches(2.9), Inches(9.0), Inches(0.5))
+    tf2 = add_textbox(slide, Inches(0.5), Inches(1.5), Inches(9.0), Inches(0.5))
     tf2.paragraphs[0].alignment = PP_ALIGN.CENTER
     run = tf2.paragraphs[0].add_run()
     run.text = d["tagline"]
     set_font(run, Pt(16), True, DARK_TEXT, italic=True)
 
     # Subtitle
-    tf3 = add_textbox(slide, Inches(0.5), Inches(3.5), Inches(9.0), Inches(0.4))
+    tf3 = add_textbox(slide, Inches(0.5), Inches(2.1), Inches(9.0), Inches(0.4))
     tf3.paragraphs[0].alignment = PP_ALIGN.CENTER
     run = tf3.paragraphs[0].add_run()
     run.text = d["subtitle"]
@@ -350,9 +345,12 @@ def build_our_title(prs):
     if links["demo_video"]:
         link_items.append(("Demo Video", links["demo_video"]))
     if links["live_prototype"]:
-        link_items.append(("Live Demo", links["live_prototype"]))
+        base = links["live_prototype"].rstrip("/")
+        link_items.append(("Admin Portal", f"{base}/admin/login"))
+        link_items.append(("Official Portal", f"{base}/official/login"))
+        link_items.append(("Citizen Portal", f"{base}/citizen/login"))
 
-    tf_links = add_textbox(slide, Inches(0.5), Inches(3.85), Inches(9.0), Inches(0.9))
+    tf_links = add_textbox(slide, Inches(0.5), Inches(2.7), Inches(9.0), Inches(1.2))
     for idx, (label, url) in enumerate(link_items):
         p = tf_links.paragraphs[0] if idx == 0 else tf_links.add_paragraph()
         p.alignment = PP_ALIGN.CENTER
@@ -1483,26 +1481,22 @@ def build_closing_slide(prs):
     slide = add_extra_slide(prs, "")
     d = SLIDE31
 
-    # Logo centered (below template header area)
-    if os.path.exists(LOGO_PATH):
-        slide.shapes.add_picture(LOGO_PATH, Inches(4.0), Inches(0.6), Inches(1.8), Inches(1.8))
-
     # eGramSabha name
-    tf = add_textbox(slide, Inches(0.5), Inches(2.5), Inches(9.0), Inches(0.5))
+    tf = add_textbox(slide, Inches(0.5), Inches(0.8), Inches(9.0), Inches(0.5))
     tf.paragraphs[0].alignment = PP_ALIGN.CENTER
     run = tf.paragraphs[0].add_run()
     run.text = d["closing"]
     set_font(run, Pt(20), True, GREEN_PRIMARY)
 
     # Vision
-    tf2 = add_textbox(slide, Inches(0.5), Inches(3.1), Inches(9.0), Inches(0.5))
+    tf2 = add_textbox(slide, Inches(0.5), Inches(1.5), Inches(9.0), Inches(0.5))
     tf2.paragraphs[0].alignment = PP_ALIGN.CENTER
     run = tf2.paragraphs[0].add_run()
     run.text = d["vision"]
     set_font(run, Pt(16), True, DARK_TEXT, italic=True)
 
     # Subtitle
-    tf3 = add_textbox(slide, Inches(0.5), Inches(3.6), Inches(9.0), Inches(0.4))
+    tf3 = add_textbox(slide, Inches(0.5), Inches(2.1), Inches(9.0), Inches(0.4))
     tf3.paragraphs[0].alignment = PP_ALIGN.CENTER
     run = tf3.paragraphs[0].add_run()
     run.text = d["subtitle"]
@@ -1516,9 +1510,12 @@ def build_closing_slide(prs):
     if links["demo_video"]:
         link_items.append(("Demo Video", links["demo_video"]))
     if links["live_prototype"]:
-        link_items.append(("Live Demo", links["live_prototype"]))
+        base = links["live_prototype"].rstrip("/")
+        link_items.append(("Admin Portal", f"{base}/admin/login"))
+        link_items.append(("Official Portal", f"{base}/official/login"))
+        link_items.append(("Citizen Portal", f"{base}/citizen/login"))
 
-    tf_links = add_textbox(slide, Inches(0.5), Inches(3.85), Inches(9.0), Inches(0.9))
+    tf_links = add_textbox(slide, Inches(0.5), Inches(2.7), Inches(9.0), Inches(1.2))
     for idx, (label, url) in enumerate(link_items):
         p = tf_links.paragraphs[0] if idx == 0 else tf_links.add_paragraph()
         p.alignment = PP_ALIGN.CENTER
@@ -1550,7 +1547,7 @@ def build_closing_slide(prs):
         set_font(run_val, Pt(9), color=GRAY_MED, name=FONT_MONO)
 
     # License
-    tf4 = add_textbox(slide, Inches(0.5), Inches(4.9), Inches(9.0), Inches(0.4))
+    tf4 = add_textbox(slide, Inches(0.5), Inches(4.85), Inches(9.0), Inches(0.4))
     tf4.paragraphs[0].alignment = PP_ALIGN.CENTER
     run = tf4.paragraphs[0].add_run()
     run.text = d["license"]

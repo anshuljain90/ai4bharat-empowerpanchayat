@@ -144,7 +144,7 @@ eGramSabha follows the proven Digital India playbook:
 
 ### Digital Public Good (DPG)
 
-eGramSabha is designed as a **Digital Public Good** — Apache 2.0 licensed, fully open source. Any state government, CSO, or development organisation can deploy, customise, and extend it. The 29 subjects under Panchayat jurisdiction represent Rs 25+ lakh crore in annual welfare spending. When citizens actively participate in Gram Sabhas, leakage reduces and impact increases.
+eGramSabha is designed as a **Digital Public Good** — fully open source. Any state government, CSO, or development organisation can deploy, customise, and extend it. The 29 subjects under Panchayat jurisdiction represent Rs 25+ lakh crore in annual welfare spending. When citizens actively participate in Gram Sabhas, leakage reduces and impact increases.
 
 ### Vision
 
@@ -159,7 +159,7 @@ eGramSabha is designed as a **Digital Public Good** — Apache 2.0 licensed, ful
 | **GitHub Public Repository** | [https://github.com/anshuljain90/ai4bharat-empowerpanchayat](https://github.com/anshuljain90/ai4bharat-empowerpanchayat) |
 | **Live Deployment** | [https://empowerpanchayat.org/](https://empowerpanchayat.org/) |
 | **Demo Video** | *(Max 3 minutes — link to be provided)* |
-| **License** | Apache 2.0 — Digital Public Good (DPG) |
+| **License** | Digital Public Good (DPG) — Open Source |
 
 ---
 
