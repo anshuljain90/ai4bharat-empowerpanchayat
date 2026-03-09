@@ -16,7 +16,6 @@ Slide mapping:
 # ============================================================
 SLIDE1 = {
     "project_name": "eGramSabha",
-    "tagline": "Sashakt Panchayat, Samriddh Bharat",
     "subtitle": "AI-Powered Digital Gram Sabha Platform",
     "team_name": "eGramSabha",
     "team_leader": "Anshul Jain",
@@ -28,7 +27,6 @@ SLIDE1 = {
 # ============================================================
 SLIDE_TITLE = {
     "project_name": "eGramSabha",
-    "tagline": '"Sashakt Panchayat, Samriddh Bharat"',
     "subtitle": "AI-Powered Digital Gram Sabha Platform",
     "event": "AWS AI for Bharat Hackathon",
 }
@@ -1132,8 +1130,8 @@ SLIDE30 = {
 # SLIDE 31: Thank You (template slide 14 - closing background)
 # ============================================================
 SLIDE31 = {
-    "vision": '"Sashakt Panchayat, Samriddh Bharat"',
-    "subtitle": "Strong Panchayat, Prosperous India",
+    "vision": "Empowering 250,000+ Gram Panchayats with AI",
+    "subtitle": "Every Voice Heard, Every Decision Tracked",
     "license": "Open Source",
     "closing": "eGramSabha \u2014 AI-Powered Digital Gram Sabha Platform",
 }

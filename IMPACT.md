@@ -366,7 +366,7 @@ At national scale, digitizing Gram Sabhas costs approximately **Rs 0.60 per citi
 
 ---
 
-## The Vision: Sashakt Panchayat, Samriddh Bharat
+## The Vision
 
 The 73rd Amendment envisioned Panchayats as **institutions of self-governance** — not just implementing agencies for state and central government schemes. That vision requires Gram Sabhas that are:
 

@@ -1,7 +1,5 @@
 # eGramSabha
 
-> **"Sashakt Panchayat, Samriddh Bharat"** — Strong Panchayat, Prosperous India
-
 **eGramSabha** is an AI-driven, voice-first, face-authenticated platform that digitizes the entire Gram Sabha lifecycle — from citizen registration to issue resolution tracking. It serves 250,000+ Gram Panchayats through three role-based portals: Admin, Official, and Citizen.
 
 **Problem Statement:** PS03 - AI for Rural Innovation & Sustainable Systems

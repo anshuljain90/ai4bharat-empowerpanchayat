@@ -148,7 +148,7 @@ eGramSabha is designed as a **Digital Public Good** — fully open source. Any s
 
 ### Vision
 
-> **"Sashakt Panchayat, Samriddh Bharat"** — Strong Panchayat, Prosperous India
+> Empowering 250,000+ Gram Panchayats with AI
 
 ---
 

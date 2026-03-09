@@ -323,15 +323,8 @@ def build_our_title(prs):
     run.text = d["project_name"]
     set_font(run, Pt(36), True, GREEN_PRIMARY)
 
-    # Tagline
-    tf2 = add_textbox(slide, Inches(0.5), Inches(1.5), Inches(9.0), Inches(0.5))
-    tf2.paragraphs[0].alignment = PP_ALIGN.CENTER
-    run = tf2.paragraphs[0].add_run()
-    run.text = d["tagline"]
-    set_font(run, Pt(16), True, DARK_TEXT, italic=True)
-
     # Subtitle
-    tf3 = add_textbox(slide, Inches(0.5), Inches(2.1), Inches(9.0), Inches(0.4))
+    tf3 = add_textbox(slide, Inches(0.5), Inches(1.5), Inches(9.0), Inches(0.4))
     tf3.paragraphs[0].alignment = PP_ALIGN.CENTER
     run = tf3.paragraphs[0].add_run()
     run.text = d["subtitle"]
